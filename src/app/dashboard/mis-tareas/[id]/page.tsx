@@ -244,7 +244,7 @@ export default function DetalleTareaPage() {
           <div>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Material adjunto</p>
             <a
-              href={`http://localhost:5000/uploads/tareas/${tarea.archivo_adjunto}`}
+              href={`${getServerURL()}/uploads/tareas/${tarea.archivo_adjunto}`}
               download
               target="_blank"
               rel="noopener noreferrer"
@@ -290,7 +290,7 @@ export default function DetalleTareaPage() {
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Archivo entregado</p>
               <a
-                href={`http://localhost:5000/uploads/entregas/${tarea.archivo_entrega}`}
+                href={`${getServerURL()}/uploads/entregas/${tarea.archivo_entrega}`}
                 download
                 target="_blank"
                 rel="noopener noreferrer"
