@@ -5,7 +5,7 @@ import {
   FiDollarSign, FiCalendar, FiCreditCard, FiAlertCircle, 
   FiCheckCircle, FiUpload, FiBook, FiClock, FiX, FiEye 
 } from 'react-icons/fi';
-import api from '@/lib/api';
+import api, { getServerURL } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface CursoPendiente {
@@ -335,7 +335,7 @@ export default function MisPagosPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         {pago.comprobante ? (
                           <a
-                            href={`http://localhost:5000${pago.comprobante}`}
+                            href={`${getServerURL()}${pago.comprobante}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-blue-600 hover:text-blue-900 dark:text-blue-400 flex items-center gap-1 text-sm"
@@ -630,12 +630,12 @@ export default function MisPagosPage() {
                     {pagoSeleccionado.comprobante.match(/\.(jpg|jpeg|png|gif)$/i) ? (
                       <div className="space-y-3">
                         <img
-                          src={`http://localhost:5000${pagoSeleccionado.comprobante}`}
+                          src={`${getServerURL()}${pagoSeleccionado.comprobante}`}
                           alt="Comprobante"
                           className="max-w-full h-auto rounded-lg shadow-md"
                         />
                         <a
-                          href={`http://localhost:5000${pagoSeleccionado.comprobante}`}
+                          href={`${getServerURL()}${pagoSeleccionado.comprobante}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 text-sm"
@@ -646,7 +646,7 @@ export default function MisPagosPage() {
                       </div>
                     ) : (
                       <a
-                        href={`http://localhost:5000${pagoSeleccionado.comprobante}`}
+                        href={`${getServerURL()}${pagoSeleccionado.comprobante}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 text-blue-600 hover:text-blue-800 dark:text-blue-400"

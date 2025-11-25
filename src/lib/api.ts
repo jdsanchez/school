@@ -8,6 +8,11 @@ const api = axios.create({
   },
 });
 
+// Helper para obtener la URL base del servidor
+export const getServerURL = () => {
+  return process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000';
+};
+
 // Interceptor para añadir el token a cada petición
 api.interceptors.request.use(
   (config) => {

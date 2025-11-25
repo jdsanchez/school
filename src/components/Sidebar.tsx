@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useConfig } from '@/contexts/ConfigContext';
 import { useSidebar } from '@/contexts/SidebarContext';
+import { getServerURL } from '@/lib/api';
 import ThemeToggle from './ThemeToggle';
 import NotificacionesPago from './NotificacionesPago';
 import {
@@ -115,7 +116,7 @@ export default function Sidebar() {
               <div className="flex items-center gap-2">
                 {config?.logo ? (
                   <img 
-                    src={`${process.env.NEXT_PUBLIC_API_URL}${config.logo}`} 
+                    src={`${getServerURL()}${config.logo}`} 
                     alt="Logo" 
                     className="w-8 h-8 object-contain rounded-lg"
                   />

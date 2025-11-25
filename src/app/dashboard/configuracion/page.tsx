@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { FiSave, FiImage } from 'react-icons/fi';
-import api from '@/lib/api';
+import api, { getServerURL } from '@/lib/api';
 import { useConfig } from '@/contexts/ConfigContext';
 
 interface Configuracion {
@@ -132,7 +132,7 @@ export default function ConfiguracionPage() {
               <div className="flex items-center gap-4">
                 {config.logo && (
                   <img
-                    src={`${process.env.NEXT_PUBLIC_API_URL}${config.logo}`}
+                    src={`${getServerURL()}${config.logo}`}
                     alt="Logo"
                     className="h-20 w-20 object-contain rounded-lg border border-gray-300 dark:border-gray-600"
                   />

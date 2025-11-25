@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { FiArrowLeft, FiUpload, FiX, FiFileText } from 'react-icons/fi';
-import api from '@/lib/api';
+import api, { getServerURL } from '@/lib/api';
 
 interface Tarea {
   id: number;
@@ -282,7 +282,7 @@ export default function EditarTareaPage() {
                     Archivo actual: {tarea.archivo_adjunto}
                   </p>
                   <a
-                    href={`http://localhost:5000/uploads/tareas/${tarea.archivo_adjunto}`}
+                    href={`${getServerURL()}/uploads/tareas/${tarea.archivo_adjunto}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm text-blue-600 hover:underline"

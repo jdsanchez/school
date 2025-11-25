@@ -5,7 +5,7 @@ import {
   FiDollarSign, FiSearch, FiFilter, FiCheck, FiX, FiEye, 
   FiDownload, FiCalendar, FiCreditCard, FiAlertCircle 
 } from 'react-icons/fi';
-import api from '@/lib/api';
+import api, { getServerURL } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface Pago {
@@ -219,7 +219,7 @@ export default function PagosPage() {
   };
 
   const verComprobante = (comprobante: string) => {
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/uploads/comprobantes/${comprobante}`;
+    const url = `${getServerURL()}/uploads/comprobantes/${comprobante}`;
     window.open(url, '_blank');
   };
 

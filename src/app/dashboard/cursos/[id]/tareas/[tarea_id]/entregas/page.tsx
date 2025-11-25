@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { FiArrowLeft, FiDownload, FiCheck, FiX, FiEdit2, FiUser, FiCalendar } from 'react-icons/fi';
-import api from '@/lib/api';
+import api, { getServerURL } from '@/lib/api';
 
 interface Entrega {
   id: number;
@@ -258,7 +258,7 @@ export default function EntregasPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <div className="flex items-center gap-2">
                         <a
-                          href={`http://localhost:5000/uploads/entregas/${entrega.archivo_entrega}`}
+                          href={`${getServerURL()}/uploads/entregas/${entrega.archivo_entrega}`}
                           download
                           target="_blank"
                           rel="noopener noreferrer"
@@ -341,7 +341,7 @@ export default function EntregasPage() {
 
                 <div>
                   <a
-                    href={`http://localhost:5000/uploads/entregas/${entregaSeleccionada.archivo_entrega}`}
+                    href={`${getServerURL()}/uploads/entregas/${entregaSeleccionada.archivo_entrega}`}
                     download
                     target="_blank"
                     rel="noopener noreferrer"
