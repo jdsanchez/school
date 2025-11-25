@@ -68,7 +68,8 @@ export default function ReporteAsistenciaPage() {
       const todasAsistencias = asistenciasRes.data;
 
       // Obtener fechas únicas de clases
-      const fechasUnicas = [...new Set(todasAsistencias.map((a: any) => a.fecha))];
+      const fechasSet = new Set(todasAsistencias.map((a: any) => a.fecha));
+      const fechasUnicas = Array.from(fechasSet);
       const totalClases = fechasUnicas.length;
 
       // Procesar datos por alumno
