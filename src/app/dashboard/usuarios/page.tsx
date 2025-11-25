@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FiEdit, FiTrash2, FiPlus, FiSearch } from 'react-icons/fi';
+import { useRouter } from 'next/navigation';
+import { FiEdit, FiTrash2, FiPlus, FiSearch, FiPower, FiSlash } from 'react-icons/fi';
 import api from '@/lib/api';
 
 interface Usuario {
@@ -17,6 +18,7 @@ interface Usuario {
 }
 
 export default function UsuariosPage() {
+  const router = useRouter();
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -33,6 +35,36 @@ export default function UsuariosPage() {
       console.error('Error al cargar usuarios:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const toggleEstado = async (id: number, activo: boolean) => {
+    if (!confirm(`¿Estás seguro de ${activo ? 'suspender' : 'activar'} este usuario?`)) {
+      return;
+    }
+
+    try {
+      await api.put(`/usuarios/${id}`, { activo: !activo });
+      alert(`Usuario ${activo ? 'suspendido' : 'activado'} exitosamente`);
+      cargarUsuarios();
+    } catch (error: any) {
+      console.error('Error al cambiar estado:', error);
+      alert(error.response?.data?.error || 'Error al cambiar estado del usuario');
+    }
+  };
+
+  const eliminarUsuario = async (id: number) => {
+    if (!confirm('¿Estás seguro de eliminar este usuario? Esta acción no se puede deshacer.')) {
+      return;
+    }
+
+    try {
+      await api.delete(`/usuarios/${id}`);
+      alert('Usuario eliminado exitosamente');
+      cargarUsuarios();
+    } catch (error: any) {
+      console.error('Error al eliminar usuario:', error);
+      alert(error.response?.data?.error || 'Error al eliminar usuario');
     }
   };
 
@@ -58,7 +90,10 @@ export default function UsuariosPage() {
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
           Gestión de Usuarios
         </h1>
-        <button className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+        <button 
+          onClick={() => router.push('/dashboard/usuarios/nuevo')}
+          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+        >
           <FiPlus />
           Nuevo Usuario
         </button>
@@ -132,10 +167,29 @@ export default function UsuariosPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex gap-2">
-                      <button className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
+                      <button 
+                        onClick={() => router.push(`/dashboard/usuarios/${usuario.id}/editar`)}
+                        className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                        title="Editar"
+                      >
                         <FiEdit size={18} />
                       </button>
-                      <button className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">
+                      <button 
+                        onClick={() => toggleEstado(usuario.id, usuario.activo)}
+                        className={`${
+                          usuario.activo 
+                            ? 'text-orange-600 hover:text-orange-900 dark:text-orange-400 dark:hover:text-orange-300' 
+                            : 'text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300'
+                        }`}
+                        title={usuario.activo ? 'Suspender' : 'Activar'}
+                      >
+                        {usuario.activo ? <FiSlash size={18} /> : <FiPower size={18} />}
+                      </button>
+                      <button 
+                        onClick={() => eliminarUsuario(usuario.id)}
+                        className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                        title="Eliminar"
+                      >
                         <FiTrash2 size={18} />
                       </button>
                     </div>
