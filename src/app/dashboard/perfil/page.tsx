@@ -39,6 +39,8 @@ export default function PerfilPage() {
   }, [usuario]);
 
   const cargarPerfil = async () => {
+    if (!usuario) return;
+    
     try {
       const response = await api.get(`/usuarios/${usuario.id}`);
       const userData = response.data;
