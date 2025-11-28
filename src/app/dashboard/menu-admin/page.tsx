@@ -518,7 +518,6 @@ function SubmenuModal({
 }) {
   const { showAlert } = useAlert();
   const [formData, setFormData] = useState({
-  const [formData, setFormData] = useState({
     nombre: submenu?.nombre || '',
     ruta: submenu?.ruta || '',
     menu_id: submenu?.menu_id || '',
