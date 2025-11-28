@@ -378,6 +378,7 @@ function MenuModal({
   onClose: () => void;
   onSuccess: () => void;
 }) {
+  const { showAlert } = useAlert();
   const [formData, setFormData] = useState({
     nombre: menu?.nombre || '',
     ruta: menu?.ruta || '',
