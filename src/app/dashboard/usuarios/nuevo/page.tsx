@@ -56,7 +56,7 @@ export default function NuevoUsuarioPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (formData.password !== confirmPassword) {
+    if (formData.password !== formData.confirm_password) {
       showAlert('Las contraseñas no coinciden', 'warning');
       return;
     }
@@ -72,7 +72,7 @@ export default function NuevoUsuarioPage() {
       const data = { ...formData };
       delete (data as any).confirm_password;
       
-      await api.post('/usuarios', formData);
+      await api.post('/usuarios', data);
       showAlert('Usuario creado exitosamente', 'success');
       router.push('/dashboard/usuarios');
     } catch (error: any) {
