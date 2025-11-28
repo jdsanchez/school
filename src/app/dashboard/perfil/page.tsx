@@ -7,7 +7,7 @@ import api from '@/lib/api';
 import { useAlert } from '@/contexts/AlertContext';
 
 export default function PerfilPage() {
-  const { usuario, setUsuario } = useAuth();
+  const { usuario, actualizarUsuario } = useAuth();
   const { showAlert } = useAlert();
   const [editando, setEditando] = useState(false);
   const [guardando, setGuardando] = useState(false);
@@ -78,6 +78,8 @@ export default function PerfilPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!usuario) return;
+    
     setGuardando(true);
 
     try {
@@ -88,8 +90,7 @@ export default function PerfilPage() {
       });
 
       // Actualizar el usuario en el contexto
-      const response = await api.get(`/usuarios/${usuario.id}`);
-      setUsuario(response.data);
+      await actualizarUsuario();
 
       showAlert('Perfil actualizado exitosamente', 'success');
       setEditando(false);
@@ -102,6 +103,8 @@ export default function PerfilPage() {
   };
 
   const handleCambiarPassword = async () => {
+    if (!usuario) return;
+
     if (!passwordData.passwordActual || !passwordData.nuevaPassword || !passwordData.confirmarPassword) {
       showAlert('Por favor completa todos los campos', 'warning');
       return;

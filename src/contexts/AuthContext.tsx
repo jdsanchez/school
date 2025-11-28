@@ -10,6 +10,8 @@ interface Usuario {
   apellido: string;
   email: string;
   rol_nombre: string;
+  rol_id: number;
+  activo: boolean;
   foto_perfil?: string;
 }
 
@@ -34,6 +36,7 @@ interface AuthContextType {
   login: (identificador: string, password: string) => Promise<void>;
   logout: () => void;
   verificarAuth: () => Promise<void>;
+  actualizarUsuario: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -83,8 +86,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setPermisos([]);
   };
 
+  const actualizarUsuario = async () => {
+    try {
+      const { data } = await api.get('/auth/verificar');
+      setUsuario(data.usuario);
+    } catch (error) {
+      console.error('Error al actualizar usuario:', error);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ usuario, permisos, loading, login, logout, verificarAuth }}>
+    <AuthContext.Provider value={{ usuario, permisos, loading, login, logout, verificarAuth, actualizarUsuario }}>
       {children}
     </AuthContext.Provider>
   );
