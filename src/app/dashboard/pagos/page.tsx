@@ -7,6 +7,7 @@ import {
 } from 'react-icons/fi';
 import api, { getServerURL } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAlert } from '@/contexts/AlertContext';
 
 interface Pago {
   id: number;
@@ -41,6 +42,7 @@ interface Estadisticas {
 
 export default function PagosPage() {
   const { usuario } = useAuth();
+  const { showAlert, showConfirm } = useAlert();
   const [pagos, setPagos] = useState<Pago[]>([]);
   const [pagosPendientes, setPagosPendientes] = useState<Pago[]>([]);
   const [estadisticas, setEstadisticas] = useState<Estadisticas | null>(null);
@@ -119,19 +121,16 @@ export default function PagosPage() {
 
   const confirmarPago = async (pago: Pago) => {
     if (!usuario?.id) {
-      alert('Error: Usuario no identificado. Por favor, recarga la página.');
+      showAlert('Error: Usuario no identificado. Por favor, recarga la página.', 'error');
       return;
     }
 
-    if (!window.confirm(`¿Confirmar el pago de ${pago.alumno_nombre} por Q${pago.monto}?`)) {
-      return;
-    }
-
-    console.log('🔍 Usuario actual:', usuario);
-    console.log('🔍 Datos a enviar:', {
-      confirmado_por: usuario.id,
-      observaciones: 'Pago verificado y confirmado'
-    });
+    showConfirm(`¿Confirmar el pago de ${pago.alumno_nombre} por Q${pago.monto}?`, async () => {
+      console.log('🔍 Usuario actual:', usuario);
+      console.log('🔍 Datos a enviar:', {
+        confirmado_por: usuario.id,
+        observaciones: 'Pago verificado y confirmado'
+      });
 
     try {
       const response = await api.put(`/pagos/${pago.id}/confirmar`, {
@@ -139,13 +138,14 @@ export default function PagosPage() {
         observaciones: 'Pago verificado y confirmado'
       });
       console.log('✅ Respuesta del servidor:', response.data);
-      alert('Pago confirmado exitosamente');
+      showAlert('Pago confirmado exitosamente', 'success');
       cargarDatos();
     } catch (error: any) {
       console.error('❌ Error completo:', error);
       console.error('❌ Respuesta del error:', error.response?.data);
-      alert(error.response?.data?.message || 'Error al confirmar pago');
+      showAlert(error.response?.data?.message || 'Error al confirmar pago', 'error');
     }
+    });
   };
 
   const rechazarPago = async (pago: Pago) => {
@@ -155,12 +155,12 @@ export default function PagosPage() {
 
   const confirmarRechazo = async () => {
     if (!usuario?.id) {
-      alert('Error: Usuario no identificado. Por favor, recarga la página.');
+      showAlert('Error: Usuario no identificado. Por favor, recarga la página.', 'error');
       return;
     }
 
     if (!observacionRechazo.trim()) {
-      alert('Debe proporcionar un motivo de rechazo');
+      showAlert('Debe proporcionar un motivo de rechazo', 'warning');
       return;
     }
 
@@ -169,13 +169,13 @@ export default function PagosPage() {
         rechazado_por: usuario.id,
         observaciones: observacionRechazo
       });
-      alert('Pago rechazado');
+      showAlert('Pago rechazado', 'success');
       setShowModal(false);
       setPagoSeleccionado(null);
       setObservacionRechazo('');
       cargarDatos();
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Error al rechazar pago');
+      showAlert(error.response?.data?.message || 'Error al rechazar pago', 'error');
     }
   };
 
@@ -206,7 +206,7 @@ export default function PagosPage() {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
-      alert('Pago registrado exitosamente. Espera confirmación del administrador.');
+      showAlert('Pago registrado exitosamente. Espera confirmación del administrador.', 'success');
       setShowPagoModal(false);
       setCursoParaPago(null);
       setPagoData({ metodo_pago: 'Transferencia', numero_referencia: '', observaciones: '' });
@@ -214,7 +214,7 @@ export default function PagosPage() {
       cargarDatos();
       cargarCursosDisponibles();
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Error al registrar pago');
+      showAlert(error.response?.data?.message || 'Error al registrar pago', 'error');
     }
   };
 

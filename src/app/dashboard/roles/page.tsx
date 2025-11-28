@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import { FiPlus, FiEdit2, FiTrash2, FiSearch } from 'react-icons/fi';
+import { useAlert } from '@/contexts/AlertContext';
 
 interface Rol {
   id: number;
@@ -15,6 +16,7 @@ interface Rol {
 
 export default function RolesPage() {
   const { usuario } = useAuth();
+  const { showAlert, showConfirm } = useAlert();
   const [roles, setRoles] = useState<Rol[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -53,19 +55,19 @@ export default function RolesPage() {
       cargarRoles();
       cerrarModal();
     } catch (error: any) {
-      alert(error.response?.data?.error || 'Error al guardar');
+      showAlert(error.response?.data?.error || 'Error al guardar', 'error');
     }
   };
 
   const handleEliminar = async (id: number) => {
-    if (confirm('¿Estás seguro de eliminar este rol?')) {
+    showConfirm('¿Estás seguro de eliminar este rol?', async () => {
       try {
         await api.delete(`/roles/${id}`);
         cargarRoles();
       } catch (error: any) {
-        alert(error.response?.data?.error || 'Error al eliminar');
+        showAlert(error.response?.data?.error || 'Error al eliminar', 'error');
       }
-    }
+    });
   };
 
   const abrirModal = (rol?: Rol) => {

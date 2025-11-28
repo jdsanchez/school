@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { FiSave, FiImage } from 'react-icons/fi';
 import api, { getServerURL } from '@/lib/api';
 import { useConfig } from '@/contexts/ConfigContext';
+import { useAlert } from '@/contexts/AlertContext';
 
 interface Configuracion {
   nombre_sistema: string;
@@ -15,6 +16,7 @@ interface Configuracion {
 
 export default function ConfiguracionPage() {
   const { recargarConfig } = useConfig();
+  const { showAlert } = useAlert();
   const [config, setConfig] = useState<Configuracion>({
     nombre_sistema: '',
     logo: '',
@@ -65,10 +67,10 @@ export default function ConfiguracionPage() {
       // Recargar configuración en el contexto
       await recargarConfig();
       
-      alert('Configuración actualizada exitosamente');
+      showAlert('Configuración actualizada exitosamente', 'success');
     } catch (error) {
       console.error('Error al guardar configuración:', error);
-      alert('Error al guardar la configuración');
+      showAlert('Error al guardar la configuración', 'error');
     } finally {
       setGuardando(false);
     }

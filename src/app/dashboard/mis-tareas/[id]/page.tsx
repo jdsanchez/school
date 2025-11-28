@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { FiArrowLeft, FiCalendar, FiDownload, FiUpload, FiCheckCircle, FiAlertCircle, FiX, FiFileText } from 'react-icons/fi';
 import api, { getServerURL } from '@/lib/api';
+import { useAlert } from '@/contexts/AlertContext';
 
 interface DetalleTarea {
   id: number;
@@ -27,6 +28,7 @@ interface DetalleTarea {
 }
 
 export default function DetalleTareaPage() {
+  const { showAlert } = useAlert();
   const router = useRouter();
   const params = useParams();
   const tareaId = params?.id as string;
@@ -78,12 +80,12 @@ export default function DetalleTareaPage() {
     ];
 
     if (file.size > maxSize) {
-      alert('El archivo no debe superar 10MB');
+      showAlert('El archivo no debe superar 10MB', 'warning');
       return;
     }
 
     if (!allowedTypes.includes(file.type)) {
-      alert('Tipo de archivo no permitido. Solo se aceptan: PDF, Word, Excel e imágenes');
+      showAlert('Tipo de archivo no permitido. Solo se aceptan: PDF, Word, Excel e imágenes', 'warning');
       return;
     }
 
@@ -109,7 +111,7 @@ export default function DetalleTareaPage() {
 
   const handleEntregarTarea = async () => {
     if (!archivo) {
-      alert('Debes adjuntar un archivo');
+      showAlert('Debes adjuntar un archivo', 'warning');
       return;
     }
 
@@ -124,11 +126,11 @@ export default function DetalleTareaPage() {
       await api.post(`/tareas/${tareaId}/entregar`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      alert('Tarea entregada exitosamente');
+      showAlert('Tarea entregada exitosamente', 'success');
       router.push('/dashboard/mis-tareas');
     } catch (error: any) {
       console.error('Error al entregar tarea:', error);
-      alert(error.response?.data?.message || 'Error al entregar tarea');
+      showAlert(error.response?.data?.message || 'Error al entregar tarea', 'error');
     } finally {
       setEntregando(false);
     }

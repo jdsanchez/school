@@ -1,9 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { FiBell, FiCheckCircle, FiAlertCircle, FiX } from 'react-icons/fi';
 import api from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAlert } from '@/contexts/AlertContext';
 
 interface Notificacion {
   id: number;
@@ -18,9 +20,17 @@ interface Notificacion {
 
 export default function NotificacionesPago() {
   const { usuario } = useAuth();
+  const { showAlert } = useAlert();
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const [notificaciones, setNotificaciones] = useState<Notificacion[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (usuario?.rol_nombre === 'Alumno') {
@@ -39,6 +49,10 @@ export default function NotificacionesPago() {
       setNotificaciones(response.data);
     } catch (error) {
       console.error('Error al cargar notificaciones:', error);
+      // Solo mostrar alerta si el dropdown está abierto
+      if (showDropdown) {
+        showAlert('Error al cargar notificaciones', 'error');
+      }
     }
   };
 
@@ -48,39 +62,41 @@ export default function NotificacionesPago() {
       cargarNotificaciones();
     } catch (error) {
       console.error('Error al marcar notificación:', error);
+      showAlert('Error al marcar la notificación como leída', 'error');
     }
   };
 
   const noLeidas = notificaciones.filter(n => !n.leido).length;
 
+  const toggleDropdown = () => {
+    if (!showDropdown && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setDropdownPosition({
+        top: rect.bottom + 8,
+        left: 0
+      });
+    }
+    setShowDropdown(!showDropdown);
+  };
+
   if (usuario?.rol_nombre !== 'Alumno') return null;
 
-  return (
-    <div className="relative">
-      {/* Botón de Notificaciones */}
-      <button
-        onClick={() => setShowDropdown(!showDropdown)}
-        className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+  const dropdownContent = showDropdown && mounted ? (
+    <>
+      {/* Overlay */}
+      <div 
+        className="fixed inset-0 z-40" 
+        onClick={() => setShowDropdown(false)}
+      />
+      
+      {/* Contenido - Posicionamiento fijo */}
+      <div 
+        className="fixed w-96 bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 z-50 max-h-[500px] overflow-hidden flex flex-col"
+        style={{
+          top: `${dropdownPosition.top}px`,
+          left: `${dropdownPosition.left}px`
+        }}
       >
-        <FiBell size={24} className="text-gray-600 dark:text-gray-300" />
-        {noLeidas > 0 && (
-          <span className="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-            {noLeidas}
-          </span>
-        )}
-      </button>
-
-      {/* Dropdown de Notificaciones */}
-      {showDropdown && (
-        <>
-          {/* Overlay */}
-          <div 
-            className="fixed inset-0 z-40" 
-            onClick={() => setShowDropdown(false)}
-          />
-          
-          {/* Contenido */}
-          <div className="absolute right-0 mt-2 w-96 bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 z-50 max-h-[500px] overflow-hidden flex flex-col">
             <div className="p-4 border-b border-gray-200 dark:border-gray-700">
               <h3 className="text-lg font-bold text-gray-900 dark:text-white">
                 Notificaciones de Pagos
@@ -186,7 +202,27 @@ export default function NotificacionesPago() {
             )}
           </div>
         </>
+  ) : null;
+
+  return (
+    <>
+      <button
+        ref={buttonRef}
+        onClick={toggleDropdown}
+        className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+      >
+        <FiBell size={24} className="text-gray-600 dark:text-gray-300" />
+        {noLeidas > 0 && (
+          <span className="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+            {noLeidas}
+          </span>
+        )}
+      </button>
+
+      {mounted && typeof window !== 'undefined' && dropdownContent && createPortal(
+        dropdownContent,
+        document.body
       )}
-    </div>
+    </>
   );
 }

@@ -4,8 +4,10 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { FiArrowLeft, FiSave, FiUpload, FiX } from 'react-icons/fi';
 import api from '@/lib/api';
+import { useAlert } from '@/contexts/AlertContext';
 
 export default function NuevaTareaPage() {
+  const { showAlert } = useAlert();
   const params = useParams();
   const router = useRouter();
   const cursoId = params.id as string;
@@ -39,10 +41,10 @@ export default function NuevaTareaPage() {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
-      alert('Tarea creada exitosamente');
+      showAlert('Tarea creada exitosamente', 'success');
       router.push(`/dashboard/cursos/${cursoId}/tareas`);
     } catch (error: any) {
-      alert(error.response?.data?.mensaje || 'Error al crear tarea');
+      showAlert(error.response?.data?.mensaje || 'Error al crear tarea', 'error');
     } finally {
       setGuardando(false);
     }
@@ -53,7 +55,7 @@ export default function NuevaTareaPage() {
     if (file) {
       // Validar tamaño (10MB)
       if (file.size > 10 * 1024 * 1024) {
-        alert('El archivo no debe superar 10MB');
+        showAlert('El archivo no debe superar 10MB', 'warning');
         return;
       }
       setArchivo(file);

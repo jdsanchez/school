@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { FiSave, FiX } from 'react-icons/fi';
 import api from '@/lib/api';
+import { useAlert } from '@/contexts/AlertContext';
 
 interface Rol {
   id: number;
@@ -12,6 +13,7 @@ interface Rol {
 
 export default function NuevoUsuarioPage() {
   const router = useRouter();
+  const { showAlert } = useAlert();
   const [roles, setRoles] = useState<Rol[]>([]);
   const [guardando, setGuardando] = useState(false);
   const [formData, setFormData] = useState({
@@ -54,13 +56,13 @@ export default function NuevoUsuarioPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (formData.password !== formData.confirm_password) {
-      alert('Las contraseñas no coinciden');
+    if (formData.password !== confirmPassword) {
+      showAlert('Las contraseñas no coinciden', 'warning');
       return;
     }
 
     if (formData.password.length < 6) {
-      alert('La contraseña debe tener al menos 6 caracteres');
+      showAlert('La contraseña debe tener al menos 6 caracteres', 'warning');
       return;
     }
 
@@ -70,12 +72,12 @@ export default function NuevoUsuarioPage() {
       const data = { ...formData };
       delete (data as any).confirm_password;
       
-      await api.post('/usuarios', data);
-      alert('Usuario creado exitosamente');
+      await api.post('/usuarios', formData);
+      showAlert('Usuario creado exitosamente', 'success');
       router.push('/dashboard/usuarios');
     } catch (error: any) {
       console.error('Error al crear usuario:', error);
-      alert(error.response?.data?.error || 'Error al crear usuario');
+      showAlert(error.response?.data?.error || 'Error al crear usuario', 'error');
     } finally {
       setGuardando(false);
     }

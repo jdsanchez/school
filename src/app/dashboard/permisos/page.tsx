@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { FiCheck, FiX, FiSave, FiRefreshCw } from 'react-icons/fi';
 import api from '@/lib/api';
+import { useAlert } from '@/contexts/AlertContext';
 
 interface Rol {
   id: number;
@@ -32,6 +33,7 @@ interface MatrizRol {
 }
 
 export default function PermisosPage() {
+  const { showAlert } = useAlert();
   const [roles, setRoles] = useState<Rol[]>([]);
   const [menus, setMenus] = useState<Menu[]>([]);
   const [matriz, setMatriz] = useState<MatrizRol[]>([]);
@@ -120,11 +122,11 @@ export default function PermisosPage() {
         });
       }
 
-      alert('Permisos guardados exitosamente');
+      showAlert('Permisos guardados exitosamente', 'success');
       setCambiosPendientes(false);
     } catch (error) {
       console.error('Error al guardar permisos:', error);
-      alert('Error al guardar permisos');
+      showAlert('Error al guardar permisos', 'error');
     } finally {
       setGuardando(false);
     }

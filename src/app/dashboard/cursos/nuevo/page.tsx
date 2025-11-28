@@ -34,6 +34,7 @@ const HORAS = [
 ];
 
 export default function NuevoCursoPage() {
+  const { showAlert } = useAlert();
   const router = useRouter();
   const [maestros, setMaestros] = useState<Maestro[]>([]);
   const [guardando, setGuardando] = useState(false);
@@ -104,10 +105,10 @@ export default function NuevoCursoPage() {
     try {
       const horarioTexto = generarTextoHorario();
       await api.post('/cursos', { ...formData, horario: horarioTexto });
-      alert('Curso creado exitosamente');
+      showAlert('Curso creado exitosamente', 'success');
       router.push('/dashboard/cursos');
     } catch (error: any) {
-      alert(error.response?.data?.mensaje || 'Error al crear curso');
+      showAlert(error.response?.data?.mensaje || 'Error al crear curso', 'error');
     } finally {
       setGuardando(false);
     }

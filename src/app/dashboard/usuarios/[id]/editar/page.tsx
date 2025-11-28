@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { FiSave, FiX } from 'react-icons/fi';
 import api from '@/lib/api';
+import { useAlert } from '@/contexts/AlertContext';
 
 interface Rol {
   id: number;
@@ -11,6 +12,7 @@ interface Rol {
 }
 
 export default function EditarUsuarioPage() {
+  const { showAlert } = useAlert();
   const router = useRouter();
   const params = useParams();
   const id = params.id;
@@ -68,7 +70,7 @@ export default function EditarUsuarioPage() {
       });
     } catch (error) {
       console.error('Error al cargar usuario:', error);
-      alert('Error al cargar usuario');
+      showAlert('Error al cargar usuario', 'error');
       router.back();
     } finally {
       setCargando(false);
@@ -87,12 +89,12 @@ export default function EditarUsuarioPage() {
     e.preventDefault();
 
     if (formData.password && formData.password !== formData.confirm_password) {
-      alert('Las contraseñas no coinciden');
+      showAlert('Las contraseñas no coinciden', 'warning');
       return;
     }
 
     if (formData.password && formData.password.length < 6) {
-      alert('La contraseña debe tener al menos 6 caracteres');
+      showAlert('La contraseña debe tener al menos 6 caracteres', 'warning');
       return;
     }
 
@@ -108,11 +110,11 @@ export default function EditarUsuarioPage() {
       }
       
       await api.put(`/usuarios/${id}`, data);
-      alert('Usuario actualizado exitosamente');
+      showAlert('Usuario actualizado exitosamente', 'success');
       router.push('/dashboard/usuarios');
     } catch (error: any) {
       console.error('Error al actualizar usuario:', error);
-      alert(error.response?.data?.error || 'Error al actualizar usuario');
+      showAlert(error.response?.data?.error || 'Error al actualizar usuario', 'error');
     } finally {
       setGuardando(false);
     }

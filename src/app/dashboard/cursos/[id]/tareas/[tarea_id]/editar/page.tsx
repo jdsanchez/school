@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { FiArrowLeft, FiUpload, FiX, FiFileText } from 'react-icons/fi';
 import api, { getServerURL } from '@/lib/api';
+import { useAlert } from '@/contexts/AlertContext';
 
 interface Tarea {
   id: number;
@@ -15,6 +16,7 @@ interface Tarea {
 }
 
 export default function EditarTareaPage() {
+  const { showAlert } = useAlert();
   const router = useRouter();
   const params = useParams();
   const cursoId = params?.id as string;
@@ -54,7 +56,7 @@ export default function EditarTareaPage() {
       }
     } catch (error) {
       console.error('Error al cargar tarea:', error);
-      alert('Error al cargar la tarea');
+      showAlert('Error al cargar la tarea', 'error');
     } finally {
       setLoading(false);
     }
@@ -83,12 +85,12 @@ export default function EditarTareaPage() {
     ];
 
     if (file.size > maxSize) {
-      alert('El archivo no debe superar 10MB');
+      showAlert('El archivo no debe superar 10MB', 'warning');
       return;
     }
 
     if (!allowedTypes.includes(file.type)) {
-      alert('Tipo de archivo no permitido');
+      showAlert('Tipo de archivo no permitido', 'warning');
       return;
     }
 
@@ -122,17 +124,17 @@ export default function EditarTareaPage() {
     e.preventDefault();
 
     if (!titulo.trim()) {
-      alert('El título es obligatorio');
+      showAlert('El título es obligatorio', 'warning');
       return;
     }
 
     if (!fechaEntrega) {
-      alert('La fecha de entrega es obligatoria');
+      showAlert('La fecha de entrega es obligatoria', 'warning');
       return;
     }
 
     if (puntosTotales <= 0) {
-      alert('Los puntos deben ser mayor a 0');
+      showAlert('Los puntos deben ser mayor a 0', 'warning');
       return;
     }
 
@@ -154,11 +156,11 @@ export default function EditarTareaPage() {
       await api.put(`/tareas/${tareaId}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      alert('Tarea actualizada exitosamente');
+      showAlert('Tarea actualizada exitosamente', 'success');
       router.push(`/dashboard/cursos/${cursoId}/tareas`);
     } catch (error: any) {
       console.error('Error al actualizar tarea:', error);
-      alert(error.response?.data?.message || 'Error al actualizar la tarea');
+      showAlert(error.response?.data?.message || 'Error al actualizar la tarea', 'error');
     } finally {
       setGuardando(false);
     }

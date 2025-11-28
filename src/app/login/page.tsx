@@ -2,10 +2,12 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { useConfig } from '@/contexts/ConfigContext';
 import ThemeToggle from '@/components/ThemeToggle';
+import LoginSlider from '@/components/LoginSlider';
 import { FiMail, FiLock, FiUser, FiEye, FiEyeOff } from 'react-icons/fi';
-import Image from 'next/image';
 
 export default function LoginPage() {
   const [identificador, setIdentificador] = useState('');
@@ -15,6 +17,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
+  const { config } = useConfig();
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -35,32 +38,9 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex bg-gray-50 dark:bg-gray-900 transition-colors">
-      {/* Left Panel - Ilustración */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 p-12 items-center justify-center relative overflow-hidden">
-        <div className="absolute inset-0 bg-pattern opacity-10"></div>
-        <div className="relative z-10 text-white max-w-md">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center">
-              <span className="text-blue-600 font-bold text-2xl">CO</span>
-            </div>
-            <h1 className="text-3xl font-bold">Class Optima</h1>
-          </div>
-          <h2 className="text-4xl font-bold mb-6">
-            Simplify Scheduling
-            <br />
-            And Timetable
-            <br />
-            Management
-          </h2>
-          <p className="text-blue-100 text-lg">
-            Gestiona tu institución educativa de manera eficiente y moderna
-          </p>
-          
-          {/* Ilustración de personas */}
-          <div className="mt-12 relative">
-            <div className="absolute bottom-0 left-0 w-full h-64 bg-gradient-to-t from-blue-600/50 to-transparent rounded-t-3xl"></div>
-          </div>
-        </div>
+      {/* Left Panel - Banner Slider */}
+      <div className="hidden lg:flex lg:w-1/2 relative">
+        <LoginSlider />
       </div>
 
       {/* Right Panel - Formulario */}
@@ -81,45 +61,18 @@ export default function LoginPage() {
 
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 transition-colors">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              Create an account
+              Inicia sesión
             </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Choose your category to access tailored features and resources
+              Ingresa tus credenciales para acceder al sistema
             </p>
 
-            {/* Selector de tipo de usuario */}
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <button
-                type="button"
-                onClick={() => setTipoUsuario('estudiante')}
-                className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all ${
-                  tipoUsuario === 'estudiante'
-                    ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-                    : 'border-gray-300 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-700'
-                }`}
-              >
-                <FiUser className="w-5 h-5" />
-                <span className="font-medium">I'm a Student</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setTipoUsuario('faculty')}
-                className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all ${
-                  tipoUsuario === 'faculty'
-                    ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-                    : 'border-gray-300 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-700'
-                }`}
-              >
-                <FiUser className="w-5 h-5" />
-                <span className="font-medium">I'm a Faculty</span>
-              </button>
-            </div>
-
             <form onSubmit={handleSubmit} className="space-y-4">
+
               {/* Email / Código */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {tipoUsuario === 'estudiante' ? 'Código de Alumno / Email' : 'Email / DPI'}
+                  Código de Alumno / Email
                 </label>
                 <div className="relative">
                   <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -127,11 +80,7 @@ export default function LoginPage() {
                     type="text"
                     value={identificador}
                     onChange={(e) => setIdentificador(e.target.value)}
-                    placeholder={
-                      tipoUsuario === 'estudiante'
-                        ? 'ALU001 o correo@ejemplo.com'
-                        : 'correo@ejemplo.com o DPI'
-                    }
+                    placeholder="ALU001 o correo@ejemplo.com"
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
                     required
                   />
@@ -142,14 +91,14 @@ export default function LoginPage() {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Password
+                    Contraseña
                   </label>
-                  <button
-                    type="button"
+                  <Link
+                    href="/recuperar-password"
                     className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
                   >
-                    Forgot ?
-                  </button>
+                    ¿Olvidaste tu contraseña?
+                  </Link>
                 </div>
                 <div className="relative">
                   <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -157,7 +106,7 @@ export default function LoginPage() {
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter your password"
+                    placeholder="Ingresa tu contraseña"
                     className="w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
                     required
                   />
@@ -190,30 +139,17 @@ export default function LoginPage() {
                     Iniciando sesión...
                   </>
                 ) : (
-                  'Create account'
+                  'Entrar'
                 )}
               </button>
             </form>
 
-            {/* Link para administradores */}
-            <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Already Have An Account?{' '}
-                <button className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
-                  Log in
-                </button>
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-500 mt-3">
-                <a href="#" className="text-blue-600 dark:text-blue-400 hover:underline">
-                  Administrators, register your school here
-                </a>
-              </p>
-            </div>
+
           </div>
 
           {/* Footer */}
           <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
-            © 2024 Class Optima. All rights reserved.
+            © 2025 {config?.nombre_sistema || 'Class Optima'}. All rights reserved.
           </p>
         </div>
       </div>

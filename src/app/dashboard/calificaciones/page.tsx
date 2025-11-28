@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { FiStar, FiTrendingUp, FiTrendingDown } from 'react-icons/fi';
 import api from '@/lib/api';
+import { useAlert } from '@/contexts/AlertContext';
 
 interface Calificacion {
   id: number;
@@ -14,6 +15,7 @@ interface Calificacion {
 }
 
 export default function CalificacionesPage() {
+  const { showAlert } = useAlert();
   const [calificaciones, setCalificaciones] = useState<Calificacion[]>([]);
   const [loading, setLoading] = useState(true);
   const [periodo, setPeriodo] = useState('Primer Bimestre');
@@ -30,6 +32,7 @@ export default function CalificacionesPage() {
       setCalificaciones(response.data);
     } catch (error) {
       console.error('Error al cargar calificaciones:', error);
+      showAlert('Error al cargar las calificaciones', 'error');
     } finally {
       setLoading(false);
     }

@@ -5,6 +5,7 @@ import { FiEdit, FiTrash2, FiPlus, FiSearch, FiUsers, FiCalendar, FiUser, FiDoll
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAlert } from '@/contexts/AlertContext';
 
 interface Curso {
   id: number;
@@ -39,6 +40,7 @@ interface Maestro {
 
 export default function CursosPage() {
   const { usuario } = useAuth();
+  const { showAlert, showConfirm } = useAlert();
   const router = useRouter();
   const [cursos, setCursos] = useState<Curso[]>([]);
   const [loading, setLoading] = useState(true);
@@ -75,14 +77,15 @@ export default function CursosPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('¿Estás seguro de eliminar este curso?')) return;
-    try {
-      await api.delete(`/cursos/${id}`);
-      alert('Curso eliminado exitosamente');
-      cargarDatos();
-    } catch (error: any) {
-      alert(error.response?.data?.mensaje || 'Error al eliminar curso');
-    }
+    showConfirm('¿Estás seguro de eliminar este curso?', async () => {
+      try {
+        await api.delete(`/cursos/${id}`);
+        showAlert('Curso eliminado exitosamente', 'success');
+        cargarDatos();
+      } catch (error: any) {
+        showAlert(error.response?.data?.mensaje || 'Error al eliminar curso', 'error');
+      }
+    });
   };
 
   const inscribirseACurso = async (curso: Curso) => {
@@ -97,12 +100,12 @@ export default function CursosPage() {
       await api.post(`/cursos/${cursoParaInscripcion.id}/inscribir`, {
         alumno_id: usuario.id
       });
-      alert('Inscripción exitosa. Ahora puedes realizar el pago.');
+      showAlert('Inscripción exitosa. Ahora puedes realizar el pago.', 'success');
       setShowInscripcionModal(false);
       setCursoParaInscripcion(null);
       cargarDatos();
     } catch (error: any) {
-      alert(error.response?.data?.mensaje || 'Error al inscribirse');
+      showAlert(error.response?.data?.mensaje || 'Error al inscribirse', 'error');
     }
   };
 
@@ -133,14 +136,14 @@ export default function CursosPage() {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
-      alert('Pago registrado exitosamente. Espera confirmación del administrador.');
+      showAlert('Pago registrado exitosamente. Espera confirmación del administrador.', 'success');
       setShowPagoModal(false);
       setCursoParaPago(null);
       setPagoData({ metodo_pago: 'Transferencia', numero_referencia: '', observaciones: '' });
       setComprobante(null);
       cargarDatos();
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Error al registrar pago');
+      showAlert(error.response?.data?.message || 'Error al registrar pago', 'error');
     }
   };
 

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { FiBook, FiCalendar, FiUser, FiClock, FiMapPin, FiCheckCircle, FiAlertCircle, FiDollarSign, FiPlus, FiX } from 'react-icons/fi';
 import api from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAlert } from '@/contexts/AlertContext';
 
 interface Curso {
   id: number;
@@ -42,6 +43,7 @@ interface MiCurso {
 
 export default function MisCursosPage() {
   const { usuario } = useAuth();
+  const { showAlert } = useAlert();
   const [misAsignaciones, setMisAsignaciones] = useState<MiCurso[]>([]);
   const [cursosDisponibles, setCursosDisponibles] = useState<Curso[]>([]);
   const [loading, setLoading] = useState(true);
@@ -97,12 +99,12 @@ export default function MisCursosPage() {
         curso_id: cursoSeleccionado.id,
         alumno_id: usuario.id
       });
-      alert('¡Te has asignado al curso exitosamente!');
+      showAlert('¡Te has asignado al curso exitosamente!', 'success');
       setShowModal(false);
       setCursoSeleccionado(null);
       cargarDatos();
     } catch (error: any) {
-      alert(error.response?.data?.mensaje || 'Error al asignarse al curso');
+      showAlert(error.response?.data?.mensaje || 'Error al asignarse al curso', 'error');
     }
   };
 

@@ -7,6 +7,7 @@ import {
 } from 'react-icons/fi';
 import api, { getServerURL } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAlert } from '@/contexts/AlertContext';
 
 interface CursoPendiente {
   curso_id: number;
@@ -37,6 +38,7 @@ interface MiPago {
 
 export default function MisPagosPage() {
   const { usuario } = useAuth();
+  const { showAlert } = useAlert();
   const [cursosPendientes, setCursosPendientes] = useState<CursoPendiente[]>([]);
   const [misPagos, setMisPagos] = useState<MiPago[]>([]);
   const [loading, setLoading] = useState(true);
@@ -126,14 +128,14 @@ export default function MisPagosPage() {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
-      alert('Pago registrado exitosamente. Espera la confirmación del administrador.');
+      showAlert('Pago registrado exitosamente. Espera la confirmación del administrador.', 'success');
       setShowPagoModal(false);
       setCursoSeleccionado(null);
       setPagoData({ metodo_pago: 'Transferencia', numero_referencia: '', observaciones: '' });
       setComprobante(null);
       cargarDatos();
     } catch (error: any) {
-      alert(error.response?.data?.mensaje || 'Error al registrar el pago');
+      showAlert(error.response?.data?.mensaje || 'Error al registrar el pago', 'error');
     }
   };
 

@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { FiEdit, FiTrash2, FiPlus, FiSearch, FiPower, FiSlash } from 'react-icons/fi';
+import { FiEdit, FiTrash2, FiPlus, FiSearch, FiPower, FiSlash, FiKey } from 'react-icons/fi';
 import api from '@/lib/api';
+import { useAlert } from '@/contexts/AlertContext';
 
 interface Usuario {
   id: number;
@@ -19,9 +20,15 @@ interface Usuario {
 
 export default function UsuariosPage() {
   const router = useRouter();
+  const { showAlert, showConfirm } = useAlert();
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
 
   useEffect(() => {
     cargarUsuarios();
@@ -39,32 +46,68 @@ export default function UsuariosPage() {
   };
 
   const toggleEstado = async (id: number, activo: boolean) => {
-    if (!confirm(`¿Estás seguro de ${activo ? 'suspender' : 'activar'} este usuario?`)) {
-      return;
-    }
-
-    try {
-      await api.put(`/usuarios/${id}`, { activo: !activo });
-      alert(`Usuario ${activo ? 'suspendido' : 'activado'} exitosamente`);
-      cargarUsuarios();
-    } catch (error: any) {
-      console.error('Error al cambiar estado:', error);
-      alert(error.response?.data?.error || 'Error al cambiar estado del usuario');
-    }
+    showConfirm(`¿Estás seguro de ${activo ? 'suspender' : 'activar'} este usuario?`, async () => {
+      try {
+        await api.put(`/usuarios/${id}`, { activo: !activo });
+        showAlert(`Usuario ${activo ? 'suspendido' : 'activado'} exitosamente`, 'success');
+        cargarUsuarios();
+      } catch (error: any) {
+        console.error('Error al cambiar estado:', error);
+        showAlert(error.response?.data?.error || 'Error al cambiar estado del usuario', 'error');
+      }
+    });
   };
 
   const eliminarUsuario = async (id: number) => {
-    if (!confirm('¿Estás seguro de eliminar este usuario? Esta acción no se puede deshacer.')) {
+    showConfirm('¿Estás seguro de eliminar este usuario? Esta acción no se puede deshacer.', async () => {
+      try {
+        await api.delete(`/usuarios/${id}`);
+        showAlert('Usuario eliminado exitosamente', 'success');
+        cargarUsuarios();
+      } catch (error: any) {
+        console.error('Error al eliminar usuario:', error);
+        showAlert(error.response?.data?.error || 'Error al eliminar usuario', 'error');
+      }
+    });
+  };
+
+  const abrirModalPassword = (id: number) => {
+    setSelectedUserId(id);
+    setNewPassword('');
+    setConfirmPassword('');
+    setShowPasswordModal(true);
+  };
+
+  const cambiarPassword = async () => {
+    if (!newPassword || !confirmPassword) {
+      showAlert('Por favor completa todos los campos', 'warning');
       return;
     }
 
+    if (newPassword !== confirmPassword) {
+      showAlert('Las contraseñas no coinciden', 'warning');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      showAlert('La contraseña debe tener al menos 6 caracteres', 'warning');
+      return;
+    }
+
+    setChangingPassword(true);
     try {
-      await api.delete(`/usuarios/${id}`);
-      alert('Usuario eliminado exitosamente');
-      cargarUsuarios();
+      await api.put(`/usuarios/${selectedUserId}/cambiar-password`, {
+        password: newPassword
+      });
+      showAlert('Contraseña actualizada exitosamente', 'success');
+      setShowPasswordModal(false);
+      setNewPassword('');
+      setConfirmPassword('');
     } catch (error: any) {
-      console.error('Error al eliminar usuario:', error);
-      alert(error.response?.data?.error || 'Error al eliminar usuario');
+      console.error('Error al cambiar contraseña:', error);
+      showAlert(error.response?.data?.error || 'Error al cambiar la contraseña', 'error');
+    } finally {
+      setChangingPassword(false);
     }
   };
 
@@ -175,6 +218,13 @@ export default function UsuariosPage() {
                         <FiEdit size={18} />
                       </button>
                       <button 
+                        onClick={() => abrirModalPassword(usuario.id)}
+                        className="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300"
+                        title="Cambiar contraseña"
+                      >
+                        <FiKey size={18} />
+                      </button>
+                      <button 
                         onClick={() => toggleEstado(usuario.id, usuario.activo)}
                         className={`${
                           usuario.activo 
@@ -206,6 +256,62 @@ export default function UsuariosPage() {
           </div>
         )}
       </div>
+
+      {/* Modal para cambiar contraseña */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+              Cambiar Contraseña
+            </h2>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Nueva Contraseña
+                </label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="Mínimo 6 caracteres"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Confirmar Contraseña
+                </label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="Confirma la contraseña"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={cambiarPassword}
+                disabled={changingPassword}
+                className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {changingPassword ? 'Cambiando...' : 'Cambiar Contraseña'}
+              </button>
+              <button
+                onClick={() => setShowPasswordModal(false)}
+                disabled={changingPassword}
+                className="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-white px-4 py-2 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

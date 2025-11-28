@@ -22,6 +22,7 @@ import {
   FiLogOut,
   FiChevronDown,
   FiChevronRight,
+  FiUser,
 } from 'react-icons/fi';
 
 interface MenuItem {
@@ -43,6 +44,7 @@ const iconMap: { [key: string]: any } = {
   star: FiStar,
   settings: FiSettings,
   clipboard: FiBook, // Para "Mis Tareas"
+  user: FiUser, // Para "Mi Perfil"
 };
 
 export default function Sidebar() {
@@ -160,6 +162,21 @@ export default function Sidebar() {
           {/* Navigation */}
           <nav className="flex-1 overflow-y-auto p-4 scrollbar-hide">
             <ul className="space-y-2">
+              {/* Mi Perfil - Para todos los usuarios */}
+              <li>
+                <Link
+                  href="/dashboard/perfil"
+                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                    pathname === '/dashboard/perfil'
+                      ? 'bg-blue-600 text-white'
+                      : 'hover:bg-gray-700 text-gray-300'
+                  }`}
+                >
+                  <FiUser size={20} />
+                  {isOpen && <span>Mi Perfil</span>}
+                </Link>
+              </li>
+
               {/* Agregar "Mis Tareas" para Alumnos */}
               {usuario?.rol_nombre === 'Alumno' && (
                 <li>
@@ -177,7 +194,9 @@ export default function Sidebar() {
                 </li>
               )}
               
-              {menusAgrupados.map((menu) => {
+              {menusAgrupados
+                .filter((menu) => menu.nombre !== 'Sistema') // Ocultar el menú Sistema
+                .map((menu) => {
                 const Icon = iconMap[menu.icono] || FiHome;
                 const hasSubmenus = menu.submenus.length > 0;
                 const isExpanded = expandedMenus.includes(menu.menu_id);
@@ -209,22 +228,28 @@ export default function Sidebar() {
                           <ul className="mt-2 ml-4 space-y-1">
                             {menu.submenus.map((submenu: any) => (
                               <li key={submenu.id}>
-                                <Link
-                                  href={submenu.ruta}
-                                  className={`block px-4 py-2 rounded-lg transition-colors ${
-                                    isActive(submenu.ruta)
-                                      ? 'bg-blue-600 text-white'
-                                      : 'hover:bg-gray-700 text-gray-400'
-                                  }`}
-                                >
-                                  {submenu.nombre}
-                                </Link>
+                                {submenu.ruta ? (
+                                  <Link
+                                    href={submenu.ruta}
+                                    className={`block px-4 py-2 rounded-lg transition-colors ${
+                                      isActive(submenu.ruta)
+                                        ? 'bg-blue-600 text-white'
+                                        : 'hover:bg-gray-700 text-gray-400'
+                                    }`}
+                                  >
+                                    {submenu.nombre}
+                                  </Link>
+                                ) : (
+                                  <div className="block px-4 py-2 text-gray-500 cursor-not-allowed">
+                                    {submenu.nombre}
+                                  </div>
+                                )}
                               </li>
                             ))}
                           </ul>
                         )}
                       </>
-                    ) : (
+                    ) : menu.ruta ? (
                       <Link
                         href={menu.ruta}
                         className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
@@ -236,6 +261,11 @@ export default function Sidebar() {
                         <Icon size={20} />
                         {isOpen && <span>{menu.nombre}</span>}
                       </Link>
+                    ) : (
+                      <div className="flex items-center gap-3 px-4 py-3 text-gray-500 cursor-not-allowed">
+                        <Icon size={20} />
+                        {isOpen && <span>{menu.nombre}</span>}
+                      </div>
                     )}
                   </li>
                 );

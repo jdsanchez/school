@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { FiArrowLeft, FiDownload, FiCheck, FiX, FiEdit2, FiUser, FiCalendar } from 'react-icons/fi';
 import api, { getServerURL } from '@/lib/api';
+import { useAlert } from '@/contexts/AlertContext';
 
 interface Entrega {
   id: number;
@@ -29,6 +30,7 @@ interface Tarea {
 }
 
 export default function EntregasPage() {
+  const { showAlert } = useAlert();
   const router = useRouter();
   const params = useParams();
   const cursoId = params?.id as string;
@@ -85,7 +87,7 @@ export default function EntregasPage() {
     if (!entregaSeleccionada || !tarea) return;
 
     if (calificacion < 0 || calificacion > tarea.puntos_totales) {
-      alert(`La calificación debe estar entre 0 y ${tarea.puntos_totales}`);
+      showAlert(`La calificación debe estar entre 0 y ${tarea.puntos_totales}`, 'warning');
       return;
     }
 
@@ -97,12 +99,12 @@ export default function EntregasPage() {
         comentarios_calificacion: comentariosCalificacion.trim() || null
       });
       
-      alert('Entrega calificada exitosamente');
+      showAlert('Entrega calificada exitosamente', 'success');
       cerrarModal();
       cargarDatos();
     } catch (error: any) {
       console.error('Error al calificar:', error);
-      alert(error.response?.data?.message || 'Error al calificar la entrega');
+      showAlert(error.response?.data?.message || 'Error al calificar la entrega', 'error');
     } finally {
       setCalificando(false);
     }

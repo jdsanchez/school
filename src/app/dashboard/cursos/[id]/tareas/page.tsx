@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { FiArrowLeft, FiPlus, FiEdit, FiTrash2, FiEye, FiDownload, FiUpload, FiCalendar, FiFileText } from 'react-icons/fi';
 import api from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAlert } from '@/contexts/AlertContext';
 
 interface Tarea {
   id: number;
@@ -25,6 +26,7 @@ export default function TareasCursoPage() {
   const params = useParams();
   const router = useRouter();
   const { usuario } = useAuth();
+  const { showAlert, showConfirm } = useAlert();
   const cursoId = params.id as string;
   
   const [tareas, setTareas] = useState<Tarea[]>([]);
@@ -51,15 +53,15 @@ export default function TareasCursoPage() {
   };
 
   const handleEliminar = async (id: number) => {
-    if (!confirm('¿Estás seguro de eliminar esta tarea?')) return;
-    
-    try {
-      await api.delete(`/tareas/${id}`);
-      alert('Tarea eliminada exitosamente');
-      cargarDatos();
-    } catch (error: any) {
-      alert(error.response?.data?.mensaje || 'Error al eliminar tarea');
-    }
+    showConfirm('¿Estás seguro de eliminar esta tarea?', async () => {
+      try {
+        await api.delete(`/tareas/${id}`);
+        showAlert('Tarea eliminada exitosamente', 'success');
+        cargarDatos();
+      } catch (error: any) {
+        showAlert(error.response?.data?.mensaje || 'Error al eliminar tarea', 'error');
+      }
+    });
   };
 
   const puedeCrearTareas = () => {

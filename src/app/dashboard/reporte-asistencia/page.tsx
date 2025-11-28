@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { FiCalendar, FiDownload, FiFilter } from 'react-icons/fi';
 import api from '@/lib/api';
+import { useAlert } from '@/contexts/AlertContext';
 
 interface Curso {
   id: number;
@@ -27,6 +28,7 @@ interface AsistenciaAlumno {
 }
 
 export default function ReporteAsistenciaPage() {
+  const { showAlert } = useAlert();
   const [cursos, setCursos] = useState<Curso[]>([]);
   const [cursoSeleccionado, setCursoSeleccionado] = useState<number | null>(null);
   const [fechaInicio, setFechaInicio] = useState('');
@@ -49,7 +51,7 @@ export default function ReporteAsistenciaPage() {
 
   const cargarReporte = async () => {
     if (!cursoSeleccionado) {
-      alert('Selecciona un curso');
+      showAlert('Selecciona un curso', 'warning');
       return;
     }
 
@@ -104,7 +106,7 @@ export default function ReporteAsistenciaPage() {
       setAsistencias(reportePorAlumno);
     } catch (error) {
       console.error('Error al cargar reporte:', error);
-      alert('Error al cargar el reporte');
+      showAlert('Error al cargar el reporte', 'error');
     } finally {
       setCargando(false);
     }

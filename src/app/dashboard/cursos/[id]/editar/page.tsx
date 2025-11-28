@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { FiArrowLeft, FiSave, FiPlus, FiTrash2 } from 'react-icons/fi';
 import api from '@/lib/api';
+import { useAlert } from '@/contexts/AlertContext';
 
 interface Maestro {
   id: number;
@@ -49,6 +50,7 @@ const HORAS = [
 ];
 
 export default function EditarCursoPage() {
+  const { showAlert } = useAlert();
   const params = useParams();
   const router = useRouter();
   const cursoId = params.id as string;
@@ -125,7 +127,7 @@ export default function EditarCursoPage() {
       setMaestros(maestrosRes.data);
     } catch (error) {
       console.error('Error al cargar datos:', error);
-      alert('Error al cargar el curso');
+      showAlert('Error al cargar el curso', 'error');
     } finally {
       setLoading(false);
     }
@@ -168,11 +170,11 @@ export default function EditarCursoPage() {
 
     try {
       const horarioTexto = generarTextoHorario();
-      await api.put(`/cursos/${cursoId}`, { ...formData, horario: horarioTexto, activo: true });
-      alert('Curso actualizado exitosamente');
+      await api.put(`/cursos/${cursoId}`, { ...formData, horario: horarioTexto });
+      showAlert('Curso actualizado exitosamente', 'success');
       router.push('/dashboard/cursos');
     } catch (error: any) {
-      alert(error.response?.data?.mensaje || 'Error al actualizar curso');
+      showAlert(error.response?.data?.mensaje || 'Error al actualizar curso', 'error');
     } finally {
       setGuardando(false);
     }

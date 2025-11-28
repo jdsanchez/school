@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { FiArrowLeft, FiUser, FiMail, FiPhone, FiCalendar, FiCheckCircle, FiXCircle, FiAlertCircle } from 'react-icons/fi';
 import api from '@/lib/api';
+import { useAlert } from '@/contexts/AlertContext';
 
 interface Alumno {
   id: number;
@@ -33,6 +34,7 @@ interface Curso {
 }
 
 export default function AlumnosCursoPage() {
+  const { showAlert } = useAlert();
   const params = useParams();
   const router = useRouter();
   const cursoId = params.id as string;
@@ -56,7 +58,7 @@ export default function AlumnosCursoPage() {
       setAlumnos(alumnosRes.data);
     } catch (error) {
       console.error('Error al cargar datos:', error);
-      alert('Error al cargar la información del curso');
+      showAlert('Error al cargar la información del curso', 'error');
     } finally {
       setLoading(false);
     }

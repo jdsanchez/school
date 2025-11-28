@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { FiCalendar, FiDownload, FiUpload, FiCheckCircle, FiAlertCircle, FiClock, FiFileText } from 'react-icons/fi';
 import api from '@/lib/api';
+import { useAlert } from '@/contexts/AlertContext';
 
 interface MiTarea {
   id: number;
@@ -27,6 +28,7 @@ interface MiTarea {
 
 export default function MisTareasPage() {
   const router = useRouter();
+  const { showAlert } = useAlert();
   const [tareas, setTareas] = useState<MiTarea[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtro, setFiltro] = useState<'todas' | 'pendientes' | 'entregadas' | 'calificadas'>('todas');
@@ -41,6 +43,7 @@ export default function MisTareasPage() {
       setTareas(response.data);
     } catch (error) {
       console.error('Error al cargar tareas:', error);
+      showAlert('Error al cargar tus tareas', 'error');
     } finally {
       setLoading(false);
     }

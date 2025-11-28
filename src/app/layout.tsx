@@ -3,6 +3,8 @@ import { Inter } from 'next/font/google';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { ConfigProvider } from '@/contexts/ConfigContext';
+import { AlertProvider } from '@/contexts/AlertContext';
+import DynamicTitle from '@/components/DynamicTitle';
 import '@/styles/globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -22,9 +24,12 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeProvider>
           <ConfigProvider>
-            <AuthProvider>
-              {children}
-            </AuthProvider>
+            <DynamicTitle />
+            <AlertProvider>
+              <AuthProvider>
+                {children}
+              </AuthProvider>
+            </AlertProvider>
           </ConfigProvider>
         </ThemeProvider>
       </body>

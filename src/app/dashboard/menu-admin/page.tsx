@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { FiMenu, FiEdit, FiTrash2, FiPlus, FiList } from 'react-icons/fi';
 import api from '@/lib/api';
+import { useAlert } from '@/contexts/AlertContext';
 
 interface Menu {
   id: number;
@@ -25,6 +26,7 @@ interface Submenu {
 }
 
 export default function MenusPage() {
+  const { showAlert, showConfirm } = useAlert();
   const [activeTab, setActiveTab] = useState<'menus' | 'submenus'>('menus');
   const [menus, setMenus] = useState<Menu[]>([]);
   const [submenus, setSubmenus] = useState<Submenu[]>([]);
@@ -57,27 +59,27 @@ export default function MenusPage() {
   };
 
   const eliminarMenu = async (id: number) => {
-    if (!confirm('¿Eliminar este menú? Se eliminarán también sus submenús.')) return;
-
-    try {
-      await api.delete(`/menus/${id}`);
-      alert('Menú eliminado exitosamente');
-      cargarDatos();
-    } catch (error: any) {
-      alert(error.response?.data?.error || 'Error al eliminar menú');
-    }
+    showConfirm('¿Eliminar este menú? Se eliminarán también sus submenús.', async () => {
+      try {
+        await api.delete(`/menus/${id}`);
+        showAlert('Menú eliminado exitosamente', 'success');
+        cargarDatos();
+      } catch (error: any) {
+        showAlert(error.response?.data?.error || 'Error al eliminar menú', 'error');
+      }
+    });
   };
 
   const eliminarSubmenu = async (id: number) => {
-    if (!confirm('¿Eliminar este submenú?')) return;
-
-    try {
-      await api.delete(`/menus/submenu/${id}`);
-      alert('Submenú eliminado exitosamente');
-      cargarDatos();
-    } catch (error: any) {
-      alert(error.response?.data?.error || 'Error al eliminar submenú');
-    }
+    showConfirm('¿Eliminar este submenú?', async () => {
+      try {
+        await api.delete(`/menus/submenu/${id}`);
+        showAlert('Submenú eliminado exitosamente', 'success');
+        cargarDatos();
+      } catch (error: any) {
+        showAlert(error.response?.data?.error || 'Error al eliminar submenú', 'error');
+      }
+    });
   };
 
   if (loading) {
@@ -392,14 +394,14 @@ function MenuModal({
     try {
       if (menu) {
         await api.put(`/menus/${menu.id}`, formData);
-        alert('Menú actualizado exitosamente');
+        showAlert('Menú actualizado exitosamente', 'success');
       } else {
         await api.post('/menus', formData);
-        alert('Menú creado exitosamente');
+        showAlert('Menú creado exitosamente', 'success');
       }
       onSuccess();
     } catch (error: any) {
-      alert(error.response?.data?.error || 'Error al guardar menú');
+      showAlert(error.response?.data?.error || 'Error al guardar menú', 'error');
     } finally {
       setGuardando(false);
     }
@@ -514,6 +516,8 @@ function SubmenuModal({
   onClose: () => void;
   onSuccess: () => void;
 }) {
+  const { showAlert } = useAlert();
+  const [formData, setFormData] = useState({
   const [formData, setFormData] = useState({
     nombre: submenu?.nombre || '',
     ruta: submenu?.ruta || '',
@@ -530,14 +534,14 @@ function SubmenuModal({
     try {
       if (submenu) {
         await api.put(`/menus/submenu/${submenu.id}`, formData);
-        alert('Submenú actualizado exitosamente');
+        showAlert('Submenú actualizado exitosamente', 'success');
       } else {
         await api.post('/menus/submenu', formData);
-        alert('Submenú creado exitosamente');
+        showAlert('Submenú creado exitosamente', 'success');
       }
       onSuccess();
     } catch (error: any) {
-      alert(error.response?.data?.error || 'Error al guardar submenú');
+      showAlert(error.response?.data?.error || 'Error al guardar submenú', 'error');
     } finally {
       setGuardando(false);
     }

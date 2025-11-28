@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { FiSave, FiCalendar } from 'react-icons/fi';
 import api from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAlert } from '@/contexts/AlertContext';
 
 interface Curso {
   id: number;
@@ -22,6 +23,7 @@ interface Alumno {
 
 export default function AsistenciaPage() {
   const { usuario } = useAuth();
+  const { showAlert } = useAlert();
   const [cursos, setCursos] = useState<Curso[]>([]);
   const [cursoSeleccionado, setCursoSeleccionado] = useState<number | null>(null);
   const [alumnos, setAlumnos] = useState<Alumno[]>([]);
@@ -85,7 +87,7 @@ export default function AsistenciaPage() {
 
   const handleGuardarAsistencia = async () => {
     if (!cursoSeleccionado) {
-      alert('Selecciona un curso primero');
+      showAlert('Selecciona un curso primero', 'warning');
       return;
     }
 
@@ -103,11 +105,11 @@ export default function AsistenciaPage() {
         )
       );
 
-      alert('Asistencia guardada exitosamente');
+      showAlert('Asistencia guardada exitosamente', 'success');
       cargarAlumnos();
     } catch (error: any) {
       console.error('Error al guardar asistencia:', error);
-      alert(error.response?.data?.error || 'Error al guardar asistencia');
+      showAlert(error.response?.data?.error || 'Error al guardar asistencia', 'error');
     } finally {
       setGuardando(false);
     }

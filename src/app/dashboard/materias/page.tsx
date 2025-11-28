@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { FiEdit, FiTrash2, FiPlus, FiSearch } from 'react-icons/fi';
 import api from '@/lib/api';
+import { useAlert } from '@/contexts/AlertContext';
 
 interface Materia {
   id: number;
@@ -14,6 +15,7 @@ interface Materia {
 }
 
 export default function MateriasPage() {
+  const { showAlert } = useAlert();
   const [materias, setMaterias] = useState<Materia[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -28,6 +30,7 @@ export default function MateriasPage() {
       setMaterias(response.data);
     } catch (error) {
       console.error('Error al cargar materias:', error);
+      showAlert('Error al cargar las materias', 'error');
     } finally {
       setLoading(false);
     }
