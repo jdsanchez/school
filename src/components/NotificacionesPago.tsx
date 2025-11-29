@@ -2,20 +2,20 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { FiBell, FiCheckCircle, FiAlertCircle, FiX } from 'react-icons/fi';
+import { FiBell, FiCheckCircle, FiAlertCircle, FiX, FiFileText, FiDollarSign, FiClock } from 'react-icons/fi';
 import api from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAlert } from '@/contexts/AlertContext';
 
 interface Notificacion {
   id: number;
-  pago_id: number;
-  tipo: string;
+  referencia_id: number;
+  tipo: 'pago_rechazado' | 'pago_confirmado' | 'tarea_pendiente' | 'tarea_atrasada' | 'curso_sin_pagar';
   mensaje: string;
   leido: boolean;
   created_at: string;
-  curso_nombre: string;
-  monto: number;
+  titulo: string;
+  valor: number | null;
 }
 
 export default function NotificacionesPago() {
@@ -45,7 +45,7 @@ export default function NotificacionesPago() {
     if (!usuario) return;
     
     try {
-      const response = await api.get(`/pagos/notificaciones/${usuario.id}`);
+      const response = await api.get(`/pagos/notificaciones-completas/${usuario.id}`);
       setNotificaciones(response.data);
     } catch (error) {
       console.error('Error al cargar notificaciones:', error);
@@ -118,72 +118,111 @@ export default function NotificacionesPago() {
                 </div>
               ) : (
                 <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {notificaciones.map((notif) => (
-                    <div
-                      key={notif.id}
-                      className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
-                        !notif.leido ? 'bg-blue-50 dark:bg-blue-900/20' : ''
-                      }`}
-                    >
-                      <div className="flex gap-3">
-                        <div className="flex-shrink-0">
-                          {notif.tipo === 'Confirmado' ? (
-                            <div className="bg-green-100 dark:bg-green-900/30 p-2 rounded-full">
-                              <FiCheckCircle className="text-green-600 dark:text-green-400" size={20} />
+                  {notificaciones.map((notif) => {
+                    // Determinar icono y color según el tipo
+                    let iconComponent;
+                    let colorClass = '';
+                    let bgClass = '';
+                    let titulo = '';
+                    
+                    switch (notif.tipo) {
+                      case 'pago_confirmado':
+                        iconComponent = <FiCheckCircle className="text-green-600 dark:text-green-400" size={20} />;
+                        bgClass = 'bg-green-100 dark:bg-green-900/30';
+                        colorClass = 'text-green-700 dark:text-green-400';
+                        titulo = '✓ Pago Aprobado';
+                        break;
+                      case 'pago_rechazado':
+                        iconComponent = <FiX className="text-red-600 dark:text-red-400" size={20} />;
+                        bgClass = 'bg-red-100 dark:bg-red-900/30';
+                        colorClass = 'text-red-700 dark:text-red-400';
+                        titulo = '✗ Pago Rechazado';
+                        break;
+                      case 'tarea_pendiente':
+                        iconComponent = <FiFileText className="text-blue-600 dark:text-blue-400" size={20} />;
+                        bgClass = 'bg-blue-100 dark:bg-blue-900/30';
+                        colorClass = 'text-blue-700 dark:text-blue-400';
+                        titulo = 'Tarea Pendiente';
+                        break;
+                      case 'tarea_atrasada':
+                        iconComponent = <FiClock className="text-orange-600 dark:text-orange-400" size={20} />;
+                        bgClass = 'bg-orange-100 dark:bg-orange-900/30';
+                        colorClass = 'text-orange-700 dark:text-orange-400';
+                        titulo = '⚠ Tarea Atrasada';
+                        break;
+                      case 'curso_sin_pagar':
+                        iconComponent = <FiDollarSign className="text-purple-600 dark:text-purple-400" size={20} />;
+                        bgClass = 'bg-purple-100 dark:bg-purple-900/30';
+                        colorClass = 'text-purple-700 dark:text-purple-400';
+                        titulo = 'Pago Pendiente';
+                        break;
+                      default:
+                        iconComponent = <FiAlertCircle className="text-gray-600 dark:text-gray-400" size={20} />;
+                        bgClass = 'bg-gray-100 dark:bg-gray-900/30';
+                        colorClass = 'text-gray-700 dark:text-gray-400';
+                        titulo = 'Notificación';
+                    }
+                    
+                    return (
+                      <div
+                        key={notif.id}
+                        className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
+                          !notif.leido ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                        }`}
+                      >
+                        <div className="flex gap-3">
+                          <div className="flex-shrink-0">
+                            <div className={`${bgClass} p-2 rounded-full`}>
+                              {iconComponent}
                             </div>
-                          ) : (
-                            <div className="bg-red-100 dark:bg-red-900/30 p-2 rounded-full">
-                              <FiAlertCircle className="text-red-600 dark:text-red-400" size={20} />
-                            </div>
-                          )}
-                        </div>
-                        
-                        <div className="flex-1 min-w-0">
-                          <div className="flex justify-between items-start mb-1">
-                            <p className={`text-sm font-semibold ${
-                              notif.tipo === 'Confirmado' 
-                                ? 'text-green-700 dark:text-green-400' 
-                                : 'text-red-700 dark:text-red-400'
-                            }`}>
-                              {notif.tipo === 'Confirmado' ? '✓ Pago Aprobado' : '✗ Pago Rechazado'}
-                            </p>
-                            {!notif.leido && (
-                              <span className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></span>
-                            )}
                           </div>
                           
-                          <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
-                            {notif.mensaje}
-                          </p>
-                          
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <p className="text-xs text-gray-500 dark:text-gray-400">
-                                {notif.curso_nombre}
-                              </p>
-                              <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                                Q{Number(notif.monto).toFixed(2)}
-                              </p>
-                            </div>
-                            
-                            <div className="text-right">
-                              <p className="text-xs text-gray-500 dark:text-gray-400">
-                                {new Date(notif.created_at).toLocaleDateString()}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex justify-between items-start mb-1">
+                              <p className={`text-sm font-semibold ${colorClass}`}>
+                                {titulo}
                               </p>
                               {!notif.leido && (
-                                <button
-                                  onClick={() => marcarComoLeida(notif.id)}
-                                  className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
-                                >
-                                  Marcar como leída
-                                </button>
+                                <span className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></span>
                               )}
+                            </div>
+                            
+                            <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
+                              {notif.mensaje}
+                            </p>
+                            
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                  {notif.titulo}
+                                </p>
+                                {notif.valor && (
+                                  <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                                    Q{Number(notif.valor).toFixed(2)}
+                                  </p>
+                                )}
+                              </div>
+                              
+                              <div className="text-right">
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                  {new Date(notif.created_at).toLocaleDateString()}
+                                </p>
+                                {!notif.leido && (
+                                  <button
+                                    onClick={() => marcarComoLeida(notif.id)}
+                                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                                  >
+                                    Marcar como leída
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
+                </div>
                 </div>
               )}
             </div>
