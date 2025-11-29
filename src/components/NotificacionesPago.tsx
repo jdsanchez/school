@@ -223,7 +223,6 @@ export default function NotificacionesPago() {
                     );
                   })}
                 </div>
-                </div>
               )}
             </div>
 
