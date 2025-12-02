@@ -47,6 +47,7 @@ export default function EntregasPage() {
   const [calificacion, setCalificacion] = useState<number>(0);
   const [comentariosCalificacion, setComentariosCalificacion] = useState('');
   const [calificando, setCalificando] = useState(false);
+  const [accionModal, setAccionModal] = useState<'aprobar' | 'rechazar'>('aprobar');
 
   useEffect(() => {
     cargarDatos();
@@ -69,10 +70,18 @@ export default function EntregasPage() {
     }
   };
 
-  const abrirModalCalificacion = (entrega: Entrega) => {
+  const abrirModalCalificar = (entrega: Entrega) => {
     setEntregaSeleccionada(entrega);
     setCalificacion(entrega.calificacion || 0);
     setComentariosCalificacion(entrega.comentarios_calificacion || '');
+    setAccionModal('aprobar');
+    setModalAbierto(true);
+  };
+
+  const abrirModalRechazar = (entrega: Entrega) => {
+    setEntregaSeleccionada(entrega);
+    setComentariosCalificacion('');
+    setAccionModal('rechazar');
     setModalAbierto(true);
   };
 
@@ -81,6 +90,7 @@ export default function EntregasPage() {
     setEntregaSeleccionada(null);
     setCalificacion(0);
     setComentariosCalificacion('');
+    setAccionModal('aprobar');
   };
 
   const handleCalificar = async () => {
@@ -96,15 +106,41 @@ export default function EntregasPage() {
     try {
       await api.put(`/tareas/entregas/${entregaSeleccionada.id}/calificar`, {
         calificacion,
-        comentarios_calificacion: comentariosCalificacion.trim() || null
+        comentarios: comentariosCalificacion.trim() || null
       });
       
-      showAlert('Entrega calificada exitosamente', 'success');
+      showAlert('Tarea aprobada y calificada exitosamente', 'success');
       cerrarModal();
       cargarDatos();
     } catch (error: any) {
       console.error('Error al calificar:', error);
-      showAlert(error.response?.data?.message || 'Error al calificar la entrega', 'error');
+      showAlert(error.response?.data?.mensaje || 'Error al calificar la entrega', 'error');
+    } finally {
+      setCalificando(false);
+    }
+  };
+
+  const handleRechazar = async () => {
+    if (!entregaSeleccionada) return;
+
+    if (!comentariosCalificacion.trim()) {
+      showAlert('Debes agregar comentarios explicando por qué se rechaza la tarea', 'warning');
+      return;
+    }
+
+    setCalificando(true);
+
+    try {
+      await api.put(`/tareas/entregas/${entregaSeleccionada.id}/rechazar`, {
+        comentarios: comentariosCalificacion.trim()
+      });
+      
+      showAlert('Tarea rechazada. El alumno deberá volver a entregarla.', 'success');
+      cerrarModal();
+      cargarDatos();
+    } catch (error: any) {
+      console.error('Error al rechazar:', error);
+      showAlert(error.response?.data?.mensaje || 'Error al rechazar la entrega', 'error');
     } finally {
       setCalificando(false);
     }
@@ -117,6 +153,14 @@ export default function EntregasPage() {
   });
 
   const getEstadoBadge = (entrega: Entrega) => {
+    if (entrega.estado === 'Rechazada') {
+      return (
+        <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+          <FiX size={12} />
+          Rechazada
+        </span>
+      );
+    }
     if (entrega.calificacion !== null) {
       return (
         <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
@@ -269,13 +313,24 @@ export default function EntregasPage() {
                         >
                           <FiDownload size={18} />
                         </a>
-                        <button
-                          onClick={() => abrirModalCalificacion(entrega)}
-                          className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
-                          title={entrega.calificacion !== null ? 'Editar calificación' : 'Calificar'}
-                        >
-                          <FiEdit2 size={18} />
-                        </button>
+                        {entrega.estado !== 'Rechazada' && (
+                          <>
+                            <button
+                              onClick={() => abrirModalCalificar(entrega)}
+                              className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+                              title={entrega.calificacion !== null ? 'Editar calificación' : 'Calificar'}
+                            >
+                              <FiCheck size={18} />
+                            </button>
+                            <button
+                              onClick={() => abrirModalRechazar(entrega)}
+                              className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                              title="Rechazar entrega"
+                            >
+                              <FiX size={18} />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -301,7 +356,7 @@ export default function EntregasPage() {
               <div className="flex items-start justify-between">
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                    Calificar Entrega
+                    {accionModal === 'aprobar' ? 'Calificar Entrega' : 'Rechazar Entrega'}
                   </h2>
                   <p className="text-gray-500 dark:text-gray-400 mt-1">
                     {entregaSeleccionada.alumno_nombre} {entregaSeleccionada.alumno_apellido}
@@ -357,55 +412,87 @@ export default function EntregasPage() {
 
               {/* Formulario de calificación */}
               <div className="space-y-4">
-                <div>
-                  <label htmlFor="calificacion" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Calificación <span className="text-red-500">*</span>
-                  </label>
-                  <div className="flex items-center gap-4">
-                    <input
-                      type="number"
-                      id="calificacion"
-                      value={calificacion}
-                      onChange={(e) => setCalificacion(parseFloat(e.target.value) || 0)}
-                      min="0"
-                      max={tarea.puntos_totales}
-                      step="0.5"
-                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                    />
-                    <span className="text-gray-500 dark:text-gray-400">
-                      / {tarea.puntos_totales}
-                    </span>
-                  </div>
-                </div>
+                {accionModal === 'aprobar' ? (
+                  <>
+                    <div>
+                      <label htmlFor="calificacion" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Calificación <span className="text-red-500">*</span>
+                      </label>
+                      <div className="flex items-center gap-4">
+                        <input
+                          type="number"
+                          id="calificacion"
+                          value={calificacion}
+                          onChange={(e) => setCalificacion(parseFloat(e.target.value) || 0)}
+                          min="0"
+                          max={tarea.puntos_totales}
+                          step="0.5"
+                          className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                        />
+                        <span className="text-gray-500 dark:text-gray-400">
+                          / {tarea.puntos_totales}
+                        </span>
+                      </div>
+                    </div>
 
-                <div>
-                  <label htmlFor="comentarios" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Comentarios (opcional)
-                  </label>
-                  <textarea
-                    id="comentarios"
-                    value={comentariosCalificacion}
-                    onChange={(e) => setComentariosCalificacion(e.target.value)}
-                    rows={4}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                    placeholder="Agrega comentarios sobre la calificación..."
-                  />
-                </div>
+                    <div>
+                      <label htmlFor="comentarios" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Comentarios (opcional)
+                      </label>
+                      <textarea
+                        id="comentarios"
+                        value={comentariosCalificacion}
+                        onChange={(e) => setComentariosCalificacion(e.target.value)}
+                        rows={4}
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                        placeholder="Agrega comentarios sobre la calificación..."
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <div>
+                    <label htmlFor="comentarios" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Razón del rechazo <span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      id="comentarios"
+                      value={comentariosCalificacion}
+                      onChange={(e) => setComentariosCalificacion(e.target.value)}
+                      rows={4}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 dark:bg-gray-700 dark:text-white"
+                      placeholder="Explica por qué se rechaza la tarea. El alumno deberá volver a entregarla."
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Botones */}
               <div className="flex gap-4">
-                <button
-                  onClick={handleCalificar}
-                  disabled={calificando}
-                  className="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
-                >
-                  {calificando ? 'Guardando...' : 'Guardar Calificación'}
-                </button>
+                {accionModal === 'aprobar' ? (
+                  <button
+                    onClick={handleCalificar}
+                    disabled={calificando}
+                    className="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
+                  >
+                    {calificando ? 'Guardando...' : 'Aprobar y Calificar'}
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleRechazar}
+                    disabled={calificando}
+                    className="flex-1 bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
+                  >
+                    {calificando ? 'Rechazando...' : 'Rechazar Tarea'}
+                  </button>
+                )}
                 <button
                   onClick={cerrarModal}
-                  className="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  disabled={calificando}
+                  className="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
                 >
+                  Cancelar
+                </button>
+              </div>
                   Cancelar
                 </button>
               </div>
