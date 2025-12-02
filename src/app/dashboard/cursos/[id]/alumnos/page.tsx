@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { FiArrowLeft, FiUser, FiMail, FiPhone, FiCalendar, FiCheckCircle, FiXCircle, FiAlertCircle } from 'react-icons/fi';
+import { FiArrowLeft, FiUser, FiMail, FiPhone, FiCalendar, FiCheckCircle, FiXCircle, FiAlertCircle, FiFileText } from 'react-icons/fi';
 import api from '@/lib/api';
 import { useAlert } from '@/contexts/AlertContext';
 
@@ -192,6 +192,9 @@ export default function AlumnosCursoPage() {
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Monto
                   </th>
+                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Acciones
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -252,6 +255,16 @@ export default function AlumnosCursoPage() {
                           <span className="text-gray-400 dark:text-gray-500">Sin pago</span>
                         )}
                       </div>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-center">
+                      <button
+                        onClick={() => router.push(`/dashboard/cursos/${cursoId}/alumnos/${alumno.id}/tareas`)}
+                        className="inline-flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                        title="Ver tareas del alumno"
+                      >
+                        <FiFileText size={16} />
+                        Ver Tareas
+                      </button>
                     </td>
                   </tr>
                 ))}

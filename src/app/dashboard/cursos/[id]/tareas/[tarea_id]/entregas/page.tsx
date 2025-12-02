@@ -2,25 +2,28 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { FiArrowLeft, FiDownload, FiCheck, FiX, FiEdit2, FiUser, FiCalendar } from 'react-icons/fi';
+import { FiArrowLeft, FiDownload, FiCheck, FiX, FiEdit2, FiEdit, FiUser, FiCalendar, FiFileText } from 'react-icons/fi';
 import api, { getServerURL } from '@/lib/api';
 import { useAlert } from '@/contexts/AlertContext';
 
 interface Entrega {
-  id: number;
+  entrega_id: number | null;
   alumno_id: number;
   alumno_nombre: string;
   alumno_apellido: string;
-  alumno_codigo: string;
-  fecha_entrega: string;
-  archivo_entrega: string;
-  comentarios: string | null;
-  estado: string;
+  codigo_alumno: string;
+  alumno_email: string;
+  archivo_entrega: string | null;
+  comentarios_alumno: string | null;
+  fecha_entrega: string | null;
+  estado: string | null;
+  estado_real: string;
   calificacion: number | null;
   comentarios_calificacion: string | null;
   fecha_calificacion: string | null;
   calificado_por: number | null;
-  calificador_nombre: string | null;
+  calificado_por_nombre: string | null;
+  puntos_totales: number;
 }
 
 interface Tarea {
@@ -104,12 +107,21 @@ export default function EntregasPage() {
     setCalificando(true);
 
     try {
-      await api.put(`/tareas/entregas/${entregaSeleccionada.id}/calificar`, {
-        calificacion,
-        comentarios: comentariosCalificacion.trim() || null
-      });
+      // Si tiene entrega_id, es una entrega existente
+      if (entregaSeleccionada.entrega_id) {
+        await api.put(`/tareas/entregas/${entregaSeleccionada.entrega_id}/calificar`, {
+          calificacion,
+          comentarios: comentariosCalificacion.trim() || null
+        });
+      } else {
+        // No entregó, crear registro de no entrega con calificación
+        await api.post(`/tareas/${tareaId}/calificar-no-entrega/${entregaSeleccionada.alumno_id}`, {
+          calificacion,
+          comentarios: comentariosCalificacion.trim() || 'No entregó la tarea'
+        });
+      }
       
-      showAlert('Tarea aprobada y calificada exitosamente', 'success');
+      showAlert('Tarea calificada exitosamente', 'success');
       cerrarModal();
       cargarDatos();
     } catch (error: any) {
@@ -123,6 +135,11 @@ export default function EntregasPage() {
   const handleRechazar = async () => {
     if (!entregaSeleccionada) return;
 
+    if (!entregaSeleccionada.entrega_id) {
+      showAlert('No se puede rechazar una tarea que no fue entregada', 'warning');
+      return;
+    }
+
     if (!comentariosCalificacion.trim()) {
       showAlert('Debes agregar comentarios explicando por qué se rechaza la tarea', 'warning');
       return;
@@ -131,7 +148,7 @@ export default function EntregasPage() {
     setCalificando(true);
 
     try {
-      await api.put(`/tareas/entregas/${entregaSeleccionada.id}/rechazar`, {
+      await api.put(`/tareas/entregas/${entregaSeleccionada.entrega_id}/rechazar`, {
         comentarios: comentariosCalificacion.trim()
       });
       
@@ -153,7 +170,9 @@ export default function EntregasPage() {
   });
 
   const getEstadoBadge = (entrega: Entrega) => {
-    if (entrega.estado === 'Rechazada') {
+    const estado = entrega.estado_real;
+    
+    if (estado === 'Rechazada') {
       return (
         <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
           <FiX size={12} />
@@ -161,11 +180,27 @@ export default function EntregasPage() {
         </span>
       );
     }
-    if (entrega.calificacion !== null) {
+    if (estado === 'Calificada' || entrega.calificacion !== null) {
       return (
         <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
           <FiCheck size={12} />
           Calificada
+        </span>
+      );
+    }
+    if (estado === 'Entregada') {
+      return (
+        <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+          <FiFileText size={12} />
+          Entregada
+        </span>
+      );
+    }
+    if (estado === 'No entregada') {
+      return (
+        <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200">
+          <FiX size={12} />
+          No entregada
         </span>
       );
     }
@@ -262,7 +297,7 @@ export default function EntregasPage() {
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {entregasFiltradas.map((entrega) => (
-                  <tr key={entrega.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <tr key={`${entrega.alumno_id}-${entrega.entrega_id || 'no-entrega'}`} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-3">
                         <div className="flex-shrink-0 h-10 w-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
@@ -273,21 +308,25 @@ export default function EntregasPage() {
                             {entrega.alumno_nombre} {entrega.alumno_apellido}
                           </div>
                           <div className="text-sm text-gray-500 dark:text-gray-400">
-                            {entrega.alumno_codigo}
+                            {entrega.codigo_alumno}
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 dark:text-white">
-                        {new Date(entrega.fecha_entrega).toLocaleDateString('es-ES', {
-                          day: '2-digit',
-                          month: 'short',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </div>
+                      {entrega.fecha_entrega ? (
+                        <div className="text-sm text-gray-900 dark:text-white">
+                          {new Date(entrega.fecha_entrega).toLocaleDateString('es-ES', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </div>
+                      ) : (
+                        <span className="text-sm text-gray-400">-</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {getEstadoBadge(entrega)}
@@ -303,6 +342,55 @@ export default function EntregasPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <div className="flex items-center gap-2">
+                        {/* Botón descargar solo si entregó archivo */}
+                        {entrega.archivo_entrega && (
+                          <a
+                            href={`${getServerURL()}/uploads/entregas/${entrega.archivo_entrega}`}
+                            download
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                            title="Descargar entrega"
+                          >
+                            <FiDownload size={18} />
+                          </a>
+                        )}
+                        {/* Botones de calificar/rechazar */}
+                        {entrega.estado_real !== 'Rechazada' && entrega.calificacion === null && (
+                          <>
+                            <button
+                              onClick={() => abrirModalCalificar(entrega)}
+                              className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+                              title={entrega.entrega_id ? 'Aprobar y calificar' : 'Calificar (no entregó)'}
+                            >
+                              <FiCheck size={18} />
+                            </button>
+                            {entrega.entrega_id && (
+                              <button
+                                onClick={() => abrirModalRechazar(entrega)}
+                                className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                title="Rechazar entrega"
+                              >
+                                <FiX size={18} />
+                              </button>
+                            )}
+                          </>
+                        )}
+                        {/* Si ya está calificada, permitir editar */}
+                        {entrega.calificacion !== null && (
+                          <button
+                            onClick={() => abrirModalCalificar(entrega)}
+                            className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                            title="Editar calificación"
+                          >
+                            <FiEdit size={18} />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
                         <a
                           href={`${getServerURL()}/uploads/entregas/${entrega.archivo_entrega}`}
                           download
@@ -371,44 +459,60 @@ export default function EntregasPage() {
               </div>
 
               {/* Información de la entrega */}
-              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 space-y-3">
-                <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-                  <FiCalendar size={16} />
-                  <span className="text-sm">
-                    Entregado el {new Date(entregaSeleccionada.fecha_entrega).toLocaleDateString('es-ES', {
-                      day: '2-digit',
-                      month: 'long',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </span>
-                </div>
+              {entregaSeleccionada.archivo_entrega ? (
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 space-y-3">
+                  <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                    <FiCalendar size={16} />
+                    <span className="text-sm">
+                      Entregado el {entregaSeleccionada.fecha_entrega 
+                        ? new Date(entregaSeleccionada.fecha_entrega).toLocaleDateString('es-ES', {
+                          day: '2-digit',
+                          month: 'long',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })
+                        : 'Fecha no disponible'}
+                    </span>
+                  </div>
 
-                {entregaSeleccionada.comentarios && (
+                  {entregaSeleccionada.comentarios && (
+                    <div>
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Comentarios del alumno:
+                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
+                        {entregaSeleccionada.comentarios}
+                      </p>
+                    </div>
+                  )}
+
                   <div>
-                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Comentarios del alumno:
-                    </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
-                      {entregaSeleccionada.comentarios}
+                    <a
+                      href={`${getServerURL()}/uploads/entregas/${entregaSeleccionada.archivo_entrega}`}
+                      download
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                    >
+                      <FiDownload />
+                      Descargar archivo
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                  <div className="flex items-center gap-2">
+                    <FiFileText className="text-yellow-600 dark:text-yellow-400" size={20} />
+                    <p className="text-yellow-800 dark:text-yellow-200 font-medium">
+                      Este alumno no entregó archivo para esta tarea
                     </p>
                   </div>
-                )}
-
-                <div>
-                  <a
-                    href={`${getServerURL()}/uploads/entregas/${entregaSeleccionada.archivo_entrega}`}
-                    download
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
-                  >
-                    <FiDownload />
-                    Descargar archivo
-                  </a>
+                  <p className="text-yellow-700 dark:text-yellow-300 text-sm mt-2">
+                    Puedes asignar una calificación de 0 puntos o cualquier otra calificación.
+                  </p>
                 </div>
-              </div>
+              )}
 
               {/* Formulario de calificación */}
               <div className="space-y-4">
