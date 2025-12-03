@@ -198,7 +198,7 @@ export default function NotificacionesPago() {
                                 </p>
                                 {notif.valor && (
                                   <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                                    Q{Number(notif.valor).toFixed(2)}
+                                    Q.{Number(notif.valor).toFixed(2)}
                                   </p>
                                 )}
                               </div>

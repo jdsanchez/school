@@ -224,7 +224,7 @@ export default function MisPagosPage() {
                   <div>
                     <p className="text-xs text-gray-500 dark:text-gray-400">Total a Pagar</p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                      Q{Number(curso.costo).toFixed(2)}
+                      Q.{Number(curso.costo).toFixed(2)}
                     </p>
                   </div>
                   <div className="flex gap-2">
@@ -307,7 +307,7 @@ export default function MisPagosPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-bold text-gray-900 dark:text-white">
-                          Q{Number(pago.monto).toFixed(2)}
+                          Q.{Number(pago.monto).toFixed(2)}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -393,7 +393,7 @@ export default function MisPagosPage() {
                 <div className="flex justify-between items-center">
                   <span className="text-gray-700 dark:text-gray-300">Monto a Pagar:</span>
                   <span className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-                    Q{Number(cursoSeleccionado.costo).toFixed(2)}
+                    Q.{Number(cursoSeleccionado.costo).toFixed(2)}
                   </span>
                 </div>
               </div>
@@ -566,7 +566,7 @@ export default function MisPagosPage() {
                   <div>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Monto Pagado</p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                      Q{Number(pagoSeleccionado.monto).toFixed(2)}
+                      Q.{Number(pagoSeleccionado.monto).toFixed(2)}
                     </p>
                   </div>
                   <div>

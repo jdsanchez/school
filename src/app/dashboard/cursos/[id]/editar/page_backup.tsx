@@ -108,6 +108,7 @@ export default function EditarCursoPage() {
       
       const curso: Curso = cursoRes.data;
       
+      // Convertir fechas de ISO a formato YYYY-MM-DD
       const fechaInicio = curso.fecha_inicio ? new Date(curso.fecha_inicio).toISOString().split('T')[0] : '';
       const fechaFin = curso.fecha_fin ? new Date(curso.fecha_fin).toISOString().split('T')[0] : '';
       
@@ -126,6 +127,7 @@ export default function EditarCursoPage() {
         activo: curso.activo,
       });
       
+      // Parsear horario existente
       if (curso.horario) {
         setHorarios(parsearHorario(curso.horario));
       }
@@ -196,6 +198,7 @@ export default function EditarCursoPage() {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center gap-4">
         <button
           onClick={() => router.back()}
@@ -208,6 +211,7 @@ export default function EditarCursoPage() {
         </h1>
       </div>
 
+      {/* Formulario */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -355,6 +359,7 @@ export default function EditarCursoPage() {
             />
           </div>
 
+          {/* Estado del Curso */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Estado del Curso
@@ -392,6 +397,7 @@ export default function EditarCursoPage() {
             </p>
           </div>
 
+          {/* Horarios */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">

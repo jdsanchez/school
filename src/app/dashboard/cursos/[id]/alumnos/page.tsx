@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { FiArrowLeft, FiUser, FiMail, FiPhone, FiCalendar, FiCheckCircle, FiXCircle, FiAlertCircle, FiFileText } from 'react-icons/fi';
+import { FiArrowLeft, FiUser, FiMail, FiPhone, FiCalendar, FiCheckCircle, FiXCircle, FiAlertCircle, FiFileText, FiUserPlus, FiX } from 'react-icons/fi';
 import api from '@/lib/api';
 import { useAlert } from '@/contexts/AlertContext';
 
@@ -33,6 +33,14 @@ interface Curso {
   costo: number;
 }
 
+interface AlumnoDisponible {
+  id: number;
+  nombre: string;
+  apellido: string;
+  email: string;
+  codigo_alumno: string;
+}
+
 export default function AlumnosCursoPage() {
   const { showAlert } = useAlert();
   const params = useParams();
@@ -43,6 +51,10 @@ export default function AlumnosCursoPage() {
   const [alumnos, setAlumnos] = useState<Alumno[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showModalAsignar, setShowModalAsignar] = useState(false);
+  const [alumnosDisponibles, setAlumnosDisponibles] = useState<AlumnoDisponible[]>([]);
+  const [alumnoSeleccionado, setAlumnoSeleccionado] = useState<number | null>(null);
+  const [searchAlumno, setSearchAlumno] = useState('');
 
   useEffect(() => {
     cargarDatos();
@@ -61,6 +73,41 @@ export default function AlumnosCursoPage() {
       showAlert('Error al cargar la información del curso', 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const abrirModalAsignar = async () => {
+    try {
+      const response = await api.get(`/cursos/${cursoId}/alumnos-disponibles`);
+      setAlumnosDisponibles(response.data);
+      setShowModalAsignar(true);
+    } catch (error: any) {
+      showAlert(error.response?.data?.mensaje || 'Error al cargar alumnos disponibles', 'error');
+    }
+  };
+
+  const cerrarModalAsignar = () => {
+    setShowModalAsignar(false);
+    setAlumnoSeleccionado(null);
+    setSearchAlumno('');
+  };
+
+  const asignarAlumno = async () => {
+    if (!alumnoSeleccionado) {
+      showAlert('Selecciona un alumno', 'error');
+      return;
+    }
+
+    try {
+      await api.post('/cursos/inscribir', {
+        curso_id: cursoId,
+        alumno_id: alumnoSeleccionado
+      });
+      showAlert('Alumno asignado exitosamente al curso', 'success');
+      cerrarModalAsignar();
+      cargarDatos();
+    } catch (error: any) {
+      showAlert(error.response?.data?.mensaje || 'Error al asignar alumno', 'error');
     }
   };
 
@@ -116,21 +163,33 @@ export default function AlumnosCursoPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <button
-          onClick={() => router.back()}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-        >
-          <FiArrowLeft size={24} />
-        </button>
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Alumnos Inscritos
-          </h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">
-            {curso.nombre} ({curso.codigo})
-          </p>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => router.back()}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+          >
+            <FiArrowLeft size={24} />
+          </button>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+              Alumnos Inscritos
+            </h1>
+            <p className="text-gray-500 dark:text-gray-400 mt-1">
+              {curso.nombre} ({curso.codigo})
+            </p>
+          </div>
         </div>
+        
+        {/* Botón Asignar Alumno */}
+        <button
+          onClick={abrirModalAsignar}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          disabled={curso.alumnos_inscritos >= curso.cupo_maximo}
+        >
+          <FiUserPlus size={20} />
+          Asignar Alumno
+        </button>
       </div>
 
       {/* Información del Curso */}
@@ -243,7 +302,7 @@ export default function AlumnosCursoPage() {
                         {alumno.monto_pagado > 0 ? (
                           <>
                             <div className="font-semibold text-green-600 dark:text-green-400">
-                              Q{Number(alumno.monto_pagado).toFixed(2)}
+                              Q.{Number(alumno.monto_pagado).toFixed(2)}
                             </div>
                             {alumno.metodo_pago && (
                               <div className="text-xs text-gray-500 dark:text-gray-400">
@@ -307,6 +366,109 @@ export default function AlumnosCursoPage() {
           </div>
         </div>
       </div>
+
+      {/* Modal Asignar Alumno */}
+      {showModalAsignar && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Asignar Alumno al Curso
+                </h2>
+                <button
+                  onClick={cerrarModalAsignar}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                >
+                  <FiX size={24} />
+                </button>
+              </div>
+              
+              {/* Búsqueda */}
+              <div className="mt-4">
+                <input
+                  type="text"
+                  placeholder="Buscar por nombre, apellido o código..."
+                  value={searchAlumno}
+                  onChange={(e) => setSearchAlumno(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+            </div>
+
+            {/* Lista de alumnos */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {alumnosDisponibles.filter(alumno => 
+                alumno.nombre.toLowerCase().includes(searchAlumno.toLowerCase()) ||
+                alumno.apellido.toLowerCase().includes(searchAlumno.toLowerCase()) ||
+                alumno.codigo_alumno?.toLowerCase().includes(searchAlumno.toLowerCase()) ||
+                alumno.email.toLowerCase().includes(searchAlumno.toLowerCase())
+              ).length > 0 ? (
+                <div className="space-y-2">
+                  {alumnosDisponibles
+                    .filter(alumno => 
+                      alumno.nombre.toLowerCase().includes(searchAlumno.toLowerCase()) ||
+                      alumno.apellido.toLowerCase().includes(searchAlumno.toLowerCase()) ||
+                      alumno.codigo_alumno?.toLowerCase().includes(searchAlumno.toLowerCase()) ||
+                      alumno.email.toLowerCase().includes(searchAlumno.toLowerCase())
+                    )
+                    .map((alumno) => (
+                      <div
+                        key={alumno.id}
+                        onClick={() => setAlumnoSeleccionado(alumno.id)}
+                        className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                          alumnoSeleccionado === alumno.id
+                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                            : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                            <FiUser className="text-blue-600 dark:text-blue-300" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-semibold text-gray-900 dark:text-white">
+                              {alumno.nombre} {alumno.apellido}
+                            </p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              {alumno.codigo_alumno} • {alumno.email}
+                            </p>
+                          </div>
+                          {alumnoSeleccionado === alumno.id && (
+                            <FiCheckCircle className="text-blue-600 dark:text-blue-400" size={24} />
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  {searchAlumno ? 'No se encontraron alumnos con ese criterio' : 'No hay alumnos disponibles para asignar'}
+                </div>
+              )}
+            </div>
+
+            {/* Botones de acción */}
+            <div className="p-6 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={cerrarModalAsignar}
+                  className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={asignarAlumno}
+                  disabled={!alumnoSeleccionado}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Asignar Alumno
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

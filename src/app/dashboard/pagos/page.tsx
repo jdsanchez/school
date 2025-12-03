@@ -315,13 +315,13 @@ export default function PagosPage() {
           <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg shadow">
             <p className="text-blue-600 dark:text-blue-400 text-sm">Recaudado</p>
             <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">
-              Q{estadisticas.total_recaudado.toFixed(2)}
+              Q.{estadisticas.total_recaudado.toFixed(2)}
             </p>
           </div>
           <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg shadow">
             <p className="text-orange-600 dark:text-orange-400 text-sm">Por Cobrar</p>
             <p className="text-2xl font-bold text-orange-700 dark:text-orange-300">
-              Q{estadisticas.total_pendiente.toFixed(2)}
+              Q.{estadisticas.total_pendiente.toFixed(2)}
             </p>
           </div>
         </div>
@@ -372,7 +372,7 @@ export default function PagosPage() {
                       </div>
                       <div className="text-right">
                         <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                          Q{Number(pago.monto).toFixed(2)}
+                          Q.{Number(pago.monto).toFixed(2)}
                         </p>
                       </div>
                     </div>
@@ -489,7 +489,7 @@ export default function PagosPage() {
                 </div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{curso.codigo}</p>
                 <p className="text-lg font-bold text-green-600 dark:text-green-400 mb-3">
-                  Q{Number(curso.costo || 0).toFixed(2)}
+                  Q.{Number(curso.costo || 0).toFixed(2)}
                 </p>
                 <button
                   onClick={() => abrirModalPago(curso)}
@@ -610,7 +610,7 @@ export default function PagosPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-bold text-green-600 dark:text-green-400">
-                        Q{pago.monto.toFixed(2)}
+                        Q.{pago.monto.toFixed(2)}
                       </div>
                       {pago.numero_referencia && (
                         <div className="text-xs text-gray-500 dark:text-gray-400">
@@ -702,7 +702,7 @@ export default function PagosPage() {
               <p className="text-gray-600 dark:text-gray-400 mb-4">
                 Alumno: <strong>{pagoSeleccionado.alumno_nombre}</strong><br />
                 Curso: <strong>{pagoSeleccionado.curso_nombre}</strong><br />
-                Monto: <strong>Q{pagoSeleccionado.monto.toFixed(2)}</strong>
+                Monto: <strong>Q.{pagoSeleccionado.monto.toFixed(2)}</strong>
               </p>
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -761,7 +761,7 @@ export default function PagosPage() {
                   <strong>Código:</strong> {cursoParaPago.codigo}
                 </p>
                 <p className="text-lg font-bold text-green-600 dark:text-green-400 mt-2">
-                  Monto: Q{Number(cursoParaPago.costo || 0).toFixed(2)}
+                  Monto: Q.{Number(cursoParaPago.costo || 0).toFixed(2)}
                 </p>
               </div>
 

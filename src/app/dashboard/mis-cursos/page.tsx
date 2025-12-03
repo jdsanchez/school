@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { FiBook, FiCalendar, FiUser, FiClock, FiMapPin, FiCheckCircle, FiAlertCircle, FiDollarSign, FiPlus, FiX } from 'react-icons/fi';
 import api from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -42,6 +43,7 @@ interface MiCurso {
 }
 
 export default function MisCursosPage() {
+  const router = useRouter();
   const { usuario } = useAuth();
   const { showAlert } = useAlert();
   const [misAsignaciones, setMisAsignaciones] = useState<MiCurso[]>([]);
@@ -50,6 +52,14 @@ export default function MisCursosPage() {
   const [showModal, setShowModal] = useState(false);
   const [cursoSeleccionado, setCursoSeleccionado] = useState<Curso | null>(null);
   const [activeTab, setActiveTab] = useState<'mis-cursos' | 'disponibles'>('mis-cursos');
+  const [showPagoModal, setShowPagoModal] = useState(false);
+  const [cursoParaPago, setCursoParaPago] = useState<MiCurso | null>(null);
+  const [comprobante, setComprobante] = useState<File | null>(null);
+  const [pagoData, setPagoData] = useState({
+    metodo_pago: 'Transferencia',
+    numero_referencia: '',
+    observaciones: ''
+  });
 
   useEffect(() => {
     cargarDatos();
@@ -108,6 +118,44 @@ export default function MisCursosPage() {
     }
   };
 
+  const abrirModalPago = (curso: MiCurso) => {
+    setCursoParaPago(curso);
+    setShowPagoModal(true);
+  };
+
+  const handlePago = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!cursoParaPago || !usuario) return;
+
+    try {
+      const formDataPago = new FormData();
+      formDataPago.append('curso_id', cursoParaPago.curso_id.toString());
+      formDataPago.append('alumno_id', usuario.id.toString());
+      formDataPago.append('monto', Number(cursoParaPago.costo || 0).toString());
+      formDataPago.append('metodo_pago', pagoData.metodo_pago);
+      formDataPago.append('fecha_limite', new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
+      formDataPago.append('numero_referencia', pagoData.numero_referencia);
+      formDataPago.append('observaciones', pagoData.observaciones);
+      
+      if (comprobante) {
+        formDataPago.append('comprobante', comprobante);
+      }
+
+      await api.post('/pagos', formDataPago, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      showAlert('Pago registrado exitosamente. Espera confirmación del administrador.', 'success');
+      setShowPagoModal(false);
+      setCursoParaPago(null);
+      setPagoData({ metodo_pago: 'Transferencia', numero_referencia: '', observaciones: '' });
+      setComprobante(null);
+      cargarDatos();
+    } catch (error: any) {
+      showAlert(error.response?.data?.message || 'Error al registrar pago', 'error');
+    }
+  };
+
   const getEstadoBadge = (estado: string) => {
     const badges: any = {
       'Inscrito': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
@@ -143,38 +191,42 @@ export default function MisCursosPage() {
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Mis Cursos</h1>
         <p className="text-gray-600 dark:text-gray-400 mt-2">
-          Gestiona tus asignaciones de cursos y explora nuevos cursos disponibles
+          {usuario?.rol_nombre === 'Alumno' 
+            ? 'Aquí puedes ver todos tus cursos asignados'
+            : 'Gestiona tus asignaciones de cursos'}
         </p>
       </div>
 
-      {/* Tabs */}
-      <div className="mb-6 border-b border-gray-200 dark:border-gray-700">
-        <nav className="flex gap-4">
-          <button
-            onClick={() => setActiveTab('mis-cursos')}
-            className={`pb-3 px-1 border-b-2 font-medium transition-colors ${
-              activeTab === 'mis-cursos'
-                ? 'border-blue-600 text-blue-600 dark:text-blue-400'
-                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'
-            }`}
-          >
-            Mis Asignaciones ({misAsignaciones.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('disponibles')}
-            className={`pb-3 px-1 border-b-2 font-medium transition-colors ${
-              activeTab === 'disponibles'
-                ? 'border-blue-600 text-blue-600 dark:text-blue-400'
-                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'
-            }`}
-          >
-            Cursos Disponibles ({cursosDisponibles.length})
-          </button>
-        </nav>
-      </div>
+      {/* Tabs - Solo para Admin/Director/Maestro */}
+      {(usuario?.rol_nombre === 'Admin' || usuario?.rol_nombre === 'Director' || usuario?.rol_nombre === 'Maestro') && (
+        <div className="mb-6 border-b border-gray-200 dark:border-gray-700">
+          <nav className="flex gap-4">
+            <button
+              onClick={() => setActiveTab('mis-cursos')}
+              className={`pb-3 px-1 border-b-2 font-medium transition-colors ${
+                activeTab === 'mis-cursos'
+                  ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'
+              }`}
+            >
+              Mis Asignaciones ({misAsignaciones.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('disponibles')}
+              className={`pb-3 px-1 border-b-2 font-medium transition-colors ${
+                activeTab === 'disponibles'
+                  ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'
+              }`}
+            >
+              Cursos Disponibles ({cursosDisponibles.length})
+            </button>
+          </nav>
+        </div>
+      )}
 
       {/* Mis Asignaciones */}
-      {activeTab === 'mis-cursos' && (
+      {(activeTab === 'mis-cursos' || usuario?.rol_nombre === 'Alumno') && (
         <div>
           {misAsignaciones.length === 0 ? (
             <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg">
@@ -234,24 +286,69 @@ export default function MisCursosPage() {
                     </div>
                   </div>
 
-                  <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Estado de Pago</p>
-                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getPagoBadge(curso.estado_pago).bg}`}>
-                          {getPagoBadge(curso.estado_pago).text}
-                        </span>
-                      </div>
-                      {curso.costo > 0 && (
+                  {/* Sección de pago - Solo mostrar si el curso tiene costo */}
+                  {curso.costo > 0 && (
+                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                      <div className="flex justify-between items-center mb-3">
+                        <div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Estado de Pago</p>
+                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getPagoBadge(curso.estado_pago).bg}`}>
+                            {getPagoBadge(curso.estado_pago).text}
+                          </span>
+                        </div>
                         <div className="text-right">
                           <p className="text-xs text-gray-500 dark:text-gray-400">Costo</p>
                           <p className="text-lg font-bold text-gray-900 dark:text-white">
-                            Q{Number(curso.costo).toFixed(2)}
+                            Q.{Number(curso.costo).toFixed(2)}
                           </p>
                         </div>
-                      )}
+                      </div>
+                      
+                      <div className="space-y-2">
+                        {/* Botón de Pago - Mostrar si no está pagado */}
+                        {curso.estado_pago !== 'Pagado' && (
+                          <button
+                            onClick={() => abrirModalPago(curso)}
+                            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-semibold"
+                          >
+                            <FiDollarSign size={16} />
+                            {curso.estado_pago === 'Pendiente' 
+                              ? 'Pago en Revisión' 
+                              : curso.estado_pago === 'Atrasado' || curso.estado_pago === 'Parcial' 
+                              ? 'Completar Pago' 
+                              : 'Pagar Ahora'}
+                          </button>
+                        )}
+                        
+                        {/* Botón Ver Tareas */}
+                        <button
+                          onClick={() => router.push(`/dashboard/cursos/${curso.curso_id}/tareas`)}
+                          className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-semibold"
+                        >
+                          <FiBook size={16} />
+                          Ver Tareas
+                        </button>
+                      </div>
                     </div>
-                  </div>
+                  )}
+
+                  {/* Para cursos gratuitos - Solo mostrar botón de tareas */}
+                  {curso.costo <= 0 && (
+                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                      <div className="mb-3">
+                        <span className="px-3 py-1 text-sm font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                          ✓ Curso Gratuito
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => router.push(`/dashboard/cursos/${curso.curso_id}/tareas`)}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-semibold"
+                      >
+                        <FiBook size={16} />
+                        Ver Tareas
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -394,7 +491,7 @@ export default function MisCursosPage() {
                   <div className="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
                     <span className="text-gray-600 dark:text-gray-400">Costo:</span>
                     <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
-                      Q{Number(cursoSeleccionado.costo).toFixed(2)}
+                      Q.{Number(cursoSeleccionado.costo).toFixed(2)}
                     </span>
                   </div>
                 )}
@@ -428,6 +525,126 @@ export default function MisCursosPage() {
                 Confirmar Asignación
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Pago */}
+      {showPagoModal && cursoParaPago && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full my-8">
+            <form onSubmit={handlePago} className="p-6">
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                  Registrar Pago
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPagoModal(false);
+                    setCursoParaPago(null);
+                    setPagoData({ metodo_pago: 'Transferencia', numero_referencia: '', observaciones: '' });
+                    setComprobante(null);
+                  }}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <FiX size={24} />
+                </button>
+              </div>
+              
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-4">
+                <p className="text-sm text-gray-700 dark:text-gray-300">
+                  <strong>Curso:</strong> {cursoParaPago.nombre}
+                </p>
+                <p className="text-sm text-gray-700 dark:text-gray-300">
+                  <strong>Código:</strong> {cursoParaPago.codigo}
+                </p>
+                <p className="text-lg font-bold text-green-600 dark:text-green-400 mt-2">
+                  Monto: Q.{Number(cursoParaPago.costo || 0).toFixed(2)}
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Método de Pago
+                  </label>
+                  <select
+                    value={pagoData.metodo_pago}
+                    onChange={(e) => setPagoData({ ...pagoData, metodo_pago: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    required
+                  >
+                    <option value="Transferencia">Transferencia Bancaria</option>
+                    <option value="Efectivo">Efectivo</option>
+                    <option value="Tarjeta">Tarjeta</option>
+                    <option value="Cheque">Cheque</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Número de Referencia
+                  </label>
+                  <input
+                    type="text"
+                    value={pagoData.numero_referencia}
+                    onChange={(e) => setPagoData({ ...pagoData, numero_referencia: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    placeholder="Ej: 123456789"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Comprobante de Pago
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*,.pdf"
+                    onChange={(e) => setComprobante(e.target.files?.[0] || null)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Formatos permitidos: JPG, PNG, PDF (máx. 5MB)
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Observaciones
+                  </label>
+                  <textarea
+                    value={pagoData.observaciones}
+                    onChange={(e) => setPagoData({ ...pagoData, observaciones: e.target.value })}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
+                    placeholder="Información adicional sobre el pago..."
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPagoModal(false);
+                    setCursoParaPago(null);
+                    setPagoData({ metodo_pago: 'Transferencia', numero_referencia: '', observaciones: '' });
+                    setComprobante(null);
+                  }}
+                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                >
+                  Registrar Pago
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

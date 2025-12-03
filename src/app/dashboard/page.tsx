@@ -258,7 +258,7 @@ export default function DashboardPage() {
                     </div>
                     <div className="text-right">
                       <p className="text-xl font-bold text-red-600 dark:text-red-400">
-                        Q{pago.monto}
+                        Q.{pago.monto}
                       </p>
                     </div>
                   </div>
@@ -393,7 +393,7 @@ export default function DashboardPage() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-gray-900 dark:text-white">Q{pago.monto}</p>
+                    <p className="font-bold text-gray-900 dark:text-white">Q.{pago.monto}</p>
                     <p className={`text-xs ${pago.estado === 'Pagado' ? 'text-green-600 dark:text-green-400' : 'text-orange-600 dark:text-orange-400'}`}>
                       {pago.estado}
                     </p>

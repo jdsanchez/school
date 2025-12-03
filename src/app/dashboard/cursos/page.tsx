@@ -46,9 +46,7 @@ export default function CursosPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showPagoModal, setShowPagoModal] = useState(false);
-  const [showInscripcionModal, setShowInscripcionModal] = useState(false);
   const [cursoParaPago, setCursoParaPago] = useState<Curso | null>(null);
-  const [cursoParaInscripcion, setCursoParaInscripcion] = useState<Curso | null>(null);
   const [comprobante, setComprobante] = useState<File | null>(null);
 
   const [pagoData, setPagoData] = useState({
@@ -86,27 +84,6 @@ export default function CursosPage() {
         showAlert(error.response?.data?.mensaje || 'Error al eliminar curso', 'error');
       }
     });
-  };
-
-  const inscribirseACurso = async (curso: Curso) => {
-    setCursoParaInscripcion(curso);
-    setShowInscripcionModal(true);
-  };
-
-  const confirmarInscripcion = async () => {
-    if (!cursoParaInscripcion || !usuario) return;
-
-    try {
-      await api.post(`/cursos/${cursoParaInscripcion.id}/inscribir`, {
-        alumno_id: usuario.id
-      });
-      showAlert('Inscripción exitosa. Ahora puedes realizar el pago.', 'success');
-      setShowInscripcionModal(false);
-      setCursoParaInscripcion(null);
-      cargarDatos();
-    } catch (error: any) {
-      showAlert(error.response?.data?.mensaje || 'Error al inscribirse', 'error');
-    }
   };
 
   const abrirModalPago = (curso: Curso) => {
@@ -244,7 +221,7 @@ export default function CursosPage() {
                 {curso.costo > 0 && (
                   <div className="flex items-center gap-2 font-bold text-green-600 dark:text-green-400">
                     <FiDollarSign size={14} />
-                    <span>Q{Number(curso.costo || 0).toFixed(2)}</span>
+                    <span>Q.{Number(curso.costo || 0).toFixed(2)}</span>
                   </div>
                 )}
                 {curso.aula && (
@@ -255,65 +232,49 @@ export default function CursosPage() {
               </div>
 
               <div className="flex flex-col gap-2 pt-3 border-t border-gray-200 dark:border-gray-700">
-                {usuario?.rol_nombre === 'Alumno' && (
+                {/* Alumnos NO pueden inscribirse por sí mismos - La inscripción debe ser realizada por Admin/Director/Maestro */}
+                {usuario?.rol_nombre === 'Alumno' && curso.esta_inscrito && (
                   <>
-                    {!curso.esta_inscrito ? (
+                    {/* Botón Ver Tareas si está inscrito y hay tareas */}
+                    {curso.total_tareas > 0 && (
                       <button
-                        onClick={() => inscribirseACurso(curso)}
-                        className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
-                        disabled={curso.alumnos_inscritos >= curso.cupo_maximo}
+                        onClick={() => router.push('/dashboard/mis-tareas')}
+                        className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm"
                       >
-                        <FiPlus size={16} />
-                        {curso.alumnos_inscritos >= curso.cupo_maximo ? 'Cupo Lleno' : 'Inscribirme'}
+                        <FiClipboard size={16} />
+                        Ver Tareas ({curso.total_tareas})
                       </button>
-                    ) : (
+                    )}
+                    
+                    {/* Botón de Pago si el curso tiene costo */}
+                    {curso.costo > 0 && (
                       <>
-                        {/* Botón Ver Tareas si está inscrito y hay tareas */}
-                        {curso.total_tareas > 0 && (
-                          <button
-                            onClick={() => router.push('/dashboard/mis-tareas')}
-                            className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm"
-                          >
-                            <FiClipboard size={16} />
-                            Ver Tareas ({curso.total_tareas})
-                          </button>
-                        )}
-                        
-                        {curso.costo > 0 ? (
-                          <>
-                            {curso.estado_pago === 'Pagado' ? (
-                              <div className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded-lg text-sm font-semibold">
-                                <FiCheckCircle size={16} />
-                                Pago Confirmado
-                              </div>
-                            ) : curso.estado_pago === 'Pendiente' ? (
-                              <div className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 rounded-lg text-sm font-semibold">
-                                <FiAlertCircle size={16} />
-                                Pago en Revisión
-                              </div>
-                            ) : curso.estado_pago === 'Atrasado' || curso.estado_pago === 'Parcial' ? (
-                              <button
-                                onClick={() => abrirModalPago(curso)}
-                                className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 text-sm font-semibold"
-                              >
-                                <FiDollarSign size={16} />
-                                {curso.estado_pago === 'Atrasado' ? 'Pago Atrasado - Pagar' : 'Completar Pago'}
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => abrirModalPago(curso)}
-                                className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-semibold"
-                              >
-                                <FiDollarSign size={16} />
-                                Pagar Curso
-                              </button>
-                            )}
-                          </>
-                        ) : (
-                          <div className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-lg text-sm">
+                        {curso.estado_pago === 'Pagado' ? (
+                          <div className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded-lg text-sm font-semibold">
                             <FiCheckCircle size={16} />
-                            Inscrito
+                            Pago Confirmado
                           </div>
+                        ) : curso.estado_pago === 'Pendiente' ? (
+                          <div className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 rounded-lg text-sm font-semibold">
+                            <FiAlertCircle size={16} />
+                            Pago en Revisión
+                          </div>
+                        ) : curso.estado_pago === 'Atrasado' || curso.estado_pago === 'Parcial' ? (
+                          <button
+                            onClick={() => abrirModalPago(curso)}
+                            className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 text-sm font-semibold"
+                          >
+                            <FiDollarSign size={16} />
+                            {curso.estado_pago === 'Atrasado' ? 'Pago Atrasado - Pagar' : 'Completar Pago'}
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => abrirModalPago(curso)}
+                            className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-semibold"
+                          >
+                            <FiDollarSign size={16} />
+                            Pagar Curso
+                          </button>
                         )}
                       </>
                     )}
@@ -399,48 +360,6 @@ export default function CursosPage() {
         )}
       </div>
 
-      {/* Modal de Inscripción */}
-      {showInscripcionModal && cursoParaInscripcion && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-              Confirmar Inscripción
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
-              ¿Deseas inscribirte al curso <strong>{cursoParaInscripcion.nombre}</strong>?
-            </p>
-            {cursoParaInscripcion.costo > 0 && (
-              <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg mb-4">
-                <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                  <strong>Costo del curso:</strong> Q{Number(cursoParaInscripcion.costo || 0).toFixed(2)}
-                </p>
-                <p className="text-xs text-yellow-600 dark:text-yellow-300 mt-1">
-                  Deberás realizar el pago después de inscribirte.
-                </p>
-              </div>
-            )}
-            <div className="flex gap-3 justify-end">
-              <button
-                onClick={() => {
-                  setShowInscripcionModal(false);
-                  setCursoParaInscripcion(null);
-                }}
-                className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={confirmarInscripcion}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
-              >
-                <FiCheckCircle />
-                Confirmar Inscripción
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Modal de Pago */}
       {showPagoModal && cursoParaPago && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
@@ -458,7 +377,7 @@ export default function CursosPage() {
                   <strong>Código:</strong> {cursoParaPago.codigo}
                 </p>
                 <p className="text-lg font-bold text-green-600 dark:text-green-400 mt-2">
-                  Monto: Q{Number(cursoParaPago.costo || 0).toFixed(2)}
+                  Monto: Q.{Number(cursoParaPago.costo || 0).toFixed(2)}
                 </p>
               </div>
 
