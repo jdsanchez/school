@@ -391,39 +391,6 @@ export default function EntregasPage() {
                   </tr>
                 ))}
               </tbody>
-                        <a
-                          href={`${getServerURL()}/uploads/entregas/${entrega.archivo_entrega}`}
-                          download
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                          title="Descargar entrega"
-                        >
-                          <FiDownload size={18} />
-                        </a>
-                        {entrega.estado !== 'Rechazada' && (
-                          <>
-                            <button
-                              onClick={() => abrirModalCalificar(entrega)}
-                              className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
-                              title={entrega.calificacion !== null ? 'Editar calificación' : 'Calificar'}
-                            >
-                              <FiCheck size={18} />
-                            </button>
-                            <button
-                              onClick={() => abrirModalRechazar(entrega)}
-                              className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                              title="Rechazar entrega"
-                            >
-                              <FiX size={18} />
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
             </table>
           </div>
         ) : (
@@ -594,9 +561,6 @@ export default function EntregasPage() {
                   disabled={calificando}
                   className="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
                 >
-                  Cancelar
-                </button>
-              </div>
                   Cancelar
                 </button>
               </div>
