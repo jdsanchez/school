@@ -443,13 +443,13 @@ export default function EntregasPage() {
                     </span>
                   </div>
 
-                  {entregaSeleccionada.comentarios && (
+                  {entregaSeleccionada.comentarios_alumno && (
                     <div>
                       <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Comentarios del alumno:
                       </p>
                       <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
-                        {entregaSeleccionada.comentarios}
+                        {entregaSeleccionada.comentarios_alumno}
                       </p>
                     </div>
                   )}
